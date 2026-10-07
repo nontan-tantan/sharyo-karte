@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両カルテ ― ダッシュボード（モック）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EDF1EC;
+    --ink:#1B2320; --ink-muted:#5B6560; --ink-faint:#8B958F;
+    --accent:#1E5631; --accent-strong:#153F24; --accent-soft:#E1ECE4;
+    --warning:#B8720A; --warning-soft:#FBEEDA; --warning-border:#EAD3A6;
+    --border:#DCE3DD; --border-strong:#C4CFC6;
+    --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-width:960px; background:var(--bg); color:var(--ink); font-family:"Noto Sans JP", sans-serif; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:20px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{ font-family:"Zen Kaku Gothic New", sans-serif; font-weight:900; font-size:22px; color:var(--accent-strong); }
+  .brand-sub{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.06em; }
+  .header-status{ font-size:12px; color:var(--ink-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 14px; }
+
+  .mock-nav{ display:flex; gap:4px; padding:10px 48px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  .mock-nav a{ font-size:13px; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:8px 16px; border-radius:7px; }
+  .mock-nav a.current{ background:var(--surface); color:var(--accent-strong); box-shadow:var(--shadow); }
+  .mock-nav a:hover:not(.current){ color:var(--ink); }
+
+  main{ max-width:1100px; margin:0 auto; padding:40px 32px 64px; }
+  .page-head{ margin-bottom:28px; }
+  .page-head .eyebrow{ font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.08em; margin-bottom:8px; }
+  .page-head h1{ font-family:"Zen Kaku Gothic New", sans-serif; font-size:26px; font-weight:900; margin:0 0 6px; }
+  .page-head p{ margin:0; font-size:13px; color:var(--ink-muted); }
+
+  .summary-strip{ display:grid; grid-template-columns:repeat(5, 1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:36px; }
+  .summary-item{ background:var(--surface); padding:20px 22px; }
+  .summary-item .num{ font-family:"JetBrains Mono", monospace; font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .summary-item.warn .num{ color:var(--warning); }
+  .summary-item .label{ margin-top:4px; font-size:12px; color:var(--ink-muted); }
+
+  .panels{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+  .panel{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .panel-head h2{ margin:0; font-size:14px; font-weight:700; }
+  .panel-head .count{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); }
+  .item-list{ list-style:none; margin:0; padding:0; }
+  .item-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; border-bottom:1px solid var(--border); text-decoration:none; color:inherit; }
+  .item-row:last-child{ border-bottom:none; }
+  .item-row:hover{ background:var(--surface-2); }
+  .item-main .id{ font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--ink-faint); }
+  .item-main .name{ font-size:13px; font-weight:600; margin-top:2px; }
+  .item-main .sub{ font-size:12px; color:var(--ink-muted); margin-top:2px; }
+  .item-badge{ font-family:"JetBrains Mono", monospace; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-soft); border:1px solid var(--warning-border); padding:4px 10px; border-radius:999px; white-space:nowrap; }
+
+  .panel-wide{ margin-bottom:36px; }
+  .panel-wide .item-row{ align-items:flex-start; }
+  .alert-icon{ flex-shrink:0; width:28px; height:28px; border-radius:8px; background:var(--warning-soft); color:var(--warning); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+  .alert-text .name{ font-size:13px; font-weight:600; }
+  .alert-text .desc{ font-size:12px; color:var(--ink-muted); margin-top:3px; line-height:1.6; }
+
+  .cta-row{ display:flex; gap:12px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; border:1px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+  .btn-secondary{ background:var(--surface); color:var(--ink); border-color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </div>
+    <span class="header-status">モック表示 ／ 機能は動作しません</span>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="モック_スタート画面.html">スタート</a>
+    <a href="モック_ダッシュボード.html" class="current">ダッシュボード</a>
+    <a href="モック_車両一覧.html">車両一覧</a>
+    <a href="モック_登録編集フォーム.html">登録・編集</a>
+  </nav>
+
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">DASHBOARD</div>
+      <h1>ダッシュボード</h1>
+      <p>保有車両の状況と、対応が必要な事項を一目で確認できます。</p>
+    </div>
+
+    <div class="summary-strip">
+      <div class="summary-item"><div class="num">42</div><div class="label">保有台数</div></div>
+      <div class="summary-item"><div class="num">36</div><div class="label">稼働中</div></div>
+      <div class="summary-item warn"><div class="num">2</div><div class="label">保険期限が近い</div></div>
+      <div class="summary-item warn"><div class="num">1</div><div class="label">車検期限が近い</div></div>
+      <div class="summary-item warn"><div class="num">1</div><div class="label">要確認あり</div></div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head"><h2>保険期限が近い／超過している車両</h2><span class="count">2件</span></div>
+        <ul class="item-list">
+          <li><a class="item-row" href="モック_車両詳細.html">
+            <div class="item-main"><div class="id">V-030</div><div class="name">日産 NV350キャラバン</div><div class="sub">工事第二課 ／ 現場移動</div></div>
+            <span class="item-badge">あと15日</span>
+          </a></li>
+          <li><a class="item-row" href="モック_車両詳細.html">
+            <div class="item-main"><div class="id">V-005</div><div class="name">三菱ふそう キャンター</div><div class="sub">総務部 ／ 巡回</div></div>
+            <span class="item-badge">あと27日</span>
+          </a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>車検期限が近い／超過している車両</h2><span class="count">1件</span></div>
+        <ul class="item-list">
+          <li><a class="item-row" href="モック_車両詳細.html">
+            <div class="item-main"><div class="id">V-021</div><div class="name">トヨタ ハイエース</div><div class="sub">工事第一課 ／ 資材運搬</div></div>
+            <span class="item-badge">あと20日</span>
+          </a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel panel-wide">
+      <div class="panel-head"><h2>整合性チェックで要確認となっている車両</h2><span class="count">1件</span></div>
+      <ul class="item-list">
+        <li><a class="item-row" href="モック_車両詳細.html">
+          <span class="alert-icon">!</span>
+          <div class="alert-text">
+            <div class="name">V-014　いすゞ エルフ（総務部）</div>
+            <div class="desc">車両状態が「売却済」ですが、保険契約が「有効」のままです。保険契約の終了状況を確認してください。</div>
+          </div>
+        </a></li>
+      </ul>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="モック_車両一覧.html">車両一覧を見る</a>
+      <a class="btn btn-secondary" href="モック_登録編集フォーム.html">新規登録</a>
+    </div>
+  </main>
+
+</body>
+</html>

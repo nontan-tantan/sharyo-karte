@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両カルテ ― スタート画面（モック）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F3;
+    --surface:#FFFFFF;
+    --surface-2:#EDF1EC;
+    --ink:#1B2320;
+    --ink-muted:#5B6560;
+    --ink-faint:#8B958F;
+    --accent:#1E5631;
+    --accent-strong:#153F24;
+    --accent-soft:#E1ECE4;
+    --border:#DCE3DD;
+    --border-strong:#C4CFC6;
+    --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    min-width:960px;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* ヘッダー */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 48px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{
+    font-family:"Zen Kaku Gothic New", sans-serif;
+    font-weight:900;
+    font-size:22px;
+    color:var(--accent-strong);
+    letter-spacing:.02em;
+  }
+  .brand-sub{
+    font-family:"JetBrains Mono", monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+    letter-spacing:.06em;
+  }
+  .header-status{
+    font-size:12px;
+    color:var(--ink-muted);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:6px 14px;
+  }
+
+  .mock-nav{ display:flex; gap:4px; padding:10px 48px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  .mock-nav a{ font-size:13px; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:8px 16px; border-radius:7px; }
+  .mock-nav a.current{ background:var(--surface); color:var(--accent-strong); box-shadow:var(--shadow); }
+  .mock-nav a:hover:not(.current){ color:var(--ink); }
+
+  /* ヒーローエリア */
+  .hero{
+    max-width:960px;
+    margin:0 auto;
+    padding:72px 32px 56px;
+    text-align:center;
+  }
+  .hero-eyebrow{
+    font-size:13px;
+    font-weight:600;
+    color:var(--accent);
+    letter-spacing:.08em;
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:"Zen Kaku Gothic New", sans-serif;
+    font-weight:900;
+    font-size:40px;
+    line-height:1.3;
+    margin:0 0 20px;
+    color:var(--ink);
+    text-wrap:balance;
+  }
+  .hero p{
+    font-size:15px;
+    line-height:1.9;
+    color:var(--ink-muted);
+    max-width:640px;
+    margin:0 auto 36px;
+  }
+  .hero-actions{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:14px 28px;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:700;
+    text-decoration:none;
+    border:1px solid transparent;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#FFFFFF;
+    box-shadow:var(--shadow);
+  }
+  .btn-secondary{
+    background:var(--surface);
+    color:var(--ink);
+    border-color:var(--border-strong);
+  }
+
+  /* クイックアクセスカード */
+  .quick-access{
+    max-width:960px;
+    margin:0 auto;
+    padding:0 32px 64px;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:20px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:26px 24px;
+    box-shadow:var(--shadow);
+  }
+  .card-num{
+    font-family:"JetBrains Mono", monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+    letter-spacing:.06em;
+    margin-bottom:12px;
+  }
+  .card h3{
+    margin:0 0 8px;
+    font-size:16px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .card p{
+    margin:0 0 18px;
+    font-size:13px;
+    line-height:1.7;
+    color:var(--ink-muted);
+  }
+  .card-link{
+    font-size:13px;
+    font-weight:600;
+    color:var(--accent-strong);
+    text-decoration:none;
+  }
+
+  /* ステータスサマリ帯 */
+  .status-strip{
+    max-width:960px;
+    margin:0 auto 64px;
+    padding:0 32px;
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:1px;
+    background:var(--border);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .status-item{
+    background:var(--surface-2);
+    padding:20px 22px;
+  }
+  .status-item .num{
+    font-family:"JetBrains Mono", monospace;
+    font-size:26px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink);
+  }
+  .status-item .label{
+    margin-top:4px;
+    font-size:12px;
+    color:var(--ink-muted);
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 32px 40px;
+    font-size:12px;
+    color:var(--ink-faint);
+    border-top:1px solid var(--border);
+  }
+  footer p{ margin:4px 0; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </div>
+    <span class="header-status">モック表示 ／ 機能は動作しません</span>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="モック_スタート画面.html" class="current">スタート</a>
+    <a href="モック_ダッシュボード.html">ダッシュボード</a>
+    <a href="モック_車両一覧.html">車両一覧</a>
+    <a href="モック_登録編集フォーム.html">登録・編集</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">業務車両 一元管理</div>
+    <h1>車両ごとの状態を、<br>ひとつのカルテで確認する。</h1>
+    <p>
+      車種・保険・所有区分・変更履歴などバラバラになりがちな情報を、
+      変更されない「社内車両ID」を軸にまとめて管理します。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="モック_ダッシュボード.html">ダッシュボードを開く</a>
+      <a class="btn btn-secondary" href="モック_登録編集フォーム.html">車両を新規登録する</a>
+    </div>
+  </section>
+
+  <div class="status-strip">
+    <div class="status-item">
+      <div class="num">42</div>
+      <div class="label">保有台数</div>
+    </div>
+    <div class="status-item">
+      <div class="num">36</div>
+      <div class="label">稼働中</div>
+    </div>
+    <div class="status-item">
+      <div class="num">2</div>
+      <div class="label">保険期限が近い</div>
+    </div>
+    <div class="status-item">
+      <div class="num">1</div>
+      <div class="label">車検期限が近い</div>
+    </div>
+    <div class="status-item">
+      <div class="num">1</div>
+      <div class="label">要確認あり</div>
+    </div>
+  </div>
+
+  <div class="quick-access">
+    <div class="card">
+      <div class="card-num">01</div>
+      <h3>車両一覧</h3>
+      <p>保有車両を部署・用途・稼働状態で絞り込んで確認できます。</p>
+      <a class="card-link" href="モック_車両一覧.html">一覧を見る →</a>
+    </div>
+    <div class="card">
+      <div class="card-num">02</div>
+      <h3>車両を登録する</h3>
+      <p>新しい車両の基本情報・所有区分・保険情報を登録します。</p>
+      <a class="card-link" href="モック_登録編集フォーム.html">登録フォームへ →</a>
+    </div>
+    <div class="card">
+      <div class="card-num">03</div>
+      <h3>要確認事項</h3>
+      <p>整合性チェックで検知された確認漏れをまとめて見られます。</p>
+      <a class="card-link" href="モック_ダッシュボード.html">確認する →</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>車両カルテ（Sharyo Karte）― 業務車両一元管理Webアプリ（仮称）</p>
+    <p>本画面は配置確認用のモックアップです。表示されている数値・車両情報はすべて架空のものです。</p>
+  </footer>
+
+</body>
+</html>

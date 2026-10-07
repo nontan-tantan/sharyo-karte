@@ -1,0 +1,8 @@
+# 共有しない資料（企画段階の内部メモ）
+車両カルテ_進捗まとめ.md
+
+# OS・エディタが自動で作るファイル
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

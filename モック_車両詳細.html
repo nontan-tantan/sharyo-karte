@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両カルテ ― 車両詳細（モック）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EDF1EC;
+    --ink:#1B2320; --ink-muted:#5B6560; --ink-faint:#8B958F;
+    --accent:#1E5631; --accent-strong:#153F24; --accent-soft:#E1ECE4;
+    --warning:#B8720A; --warning-soft:#FBEEDA; --warning-border:#EAD3A6;
+    --border:#DCE3DD; --border-strong:#C4CFC6;
+    --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-width:960px; background:var(--bg); color:var(--ink); font-family:"Noto Sans JP", sans-serif; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:20px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{ font-family:"Zen Kaku Gothic New", sans-serif; font-weight:900; font-size:22px; color:var(--accent-strong); }
+  .brand-sub{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.06em; }
+  .header-status{ font-size:12px; color:var(--ink-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 14px; }
+
+  .mock-nav{ display:flex; gap:4px; padding:10px 48px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  .mock-nav a{ font-size:13px; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:8px 16px; border-radius:7px; }
+  .mock-nav a.current{ background:var(--surface); color:var(--accent-strong); box-shadow:var(--shadow); }
+  .mock-nav a:hover:not(.current){ color:var(--ink); }
+
+  main{ max-width:900px; margin:0 auto; padding:40px 32px 64px; }
+
+  .card-head{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); padding:24px 28px; margin-bottom:20px; }
+  .card-head-top{ display:flex; align-items:center; justify-content:space-between; }
+  .vehicle-id{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.06em; }
+  .vehicle-name{ font-family:"Zen Kaku Gothic New", sans-serif; font-size:24px; font-weight:900; margin:6px 0 8px; }
+  .vehicle-meta{ font-size:13px; color:var(--ink-muted); }
+  .status-pill{ display:inline-block; font-size:12px; font-weight:700; padding:5px 14px; border-radius:999px; }
+  .status-sold{ background:var(--warning-soft); color:var(--warning); }
+
+  .warn-banner{ display:flex; gap:14px; align-items:flex-start; background:var(--warning-soft); border:1px solid var(--warning-border); border-radius:10px; padding:16px 18px; margin-top:18px; }
+  .warn-banner .icon{ flex-shrink:0; width:26px; height:26px; border-radius:8px; background:var(--warning); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .warn-banner .text{ font-size:13px; line-height:1.7; color:#6B4A0E; }
+  .warn-banner .text strong{ display:block; margin-bottom:2px; }
+
+  .tabs{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:22px; }
+  .tab-radio{ position:absolute; opacity:0; pointer-events:none; }
+  .tab-bar{ display:flex; border-bottom:1px solid var(--border); background:var(--surface-2); }
+  .tab-label{ flex:1; text-align:center; padding:14px 10px; font-size:13px; font-weight:500; color:var(--ink-muted); cursor:pointer; border-bottom:3px solid transparent; transition:color .15s, background .15s; }
+  .tab-label:hover{ color:var(--ink); background:rgba(255,255,255,.5); }
+  #tab-basic:checked ~ .tab-bar label[for="tab-basic"],
+  #tab-own:checked ~ .tab-bar label[for="tab-own"],
+  #tab-insurance:checked ~ .tab-bar label[for="tab-insurance"],
+  #tab-history:checked ~ .tab-bar label[for="tab-history"]{
+    color:var(--accent-strong); font-weight:700; border-bottom-color:var(--accent); background:var(--accent-soft);
+  }
+  #tab-basic:focus-visible ~ .tab-bar label[for="tab-basic"],
+  #tab-own:focus-visible ~ .tab-bar label[for="tab-own"],
+  #tab-insurance:focus-visible ~ .tab-bar label[for="tab-insurance"],
+  #tab-history:focus-visible ~ .tab-bar label[for="tab-history"]{
+    outline:2px solid var(--accent); outline-offset:-2px;
+  }
+  .tab-panel{ display:none; padding:26px 28px; }
+  #tab-basic:checked ~ .tab-content #panel-basic,
+  #tab-own:checked ~ .tab-content #panel-own,
+  #tab-insurance:checked ~ .tab-content #panel-insurance,
+  #tab-history:checked ~ .tab-content #panel-history{ display:block; }
+
+  .field-grid{ display:grid; grid-template-columns:160px 1fr; row-gap:16px; }
+  .field-grid dt{ font-size:12px; color:var(--ink-faint); }
+  .field-grid dd{ margin:0; font-size:14px; }
+
+  .history-list{ list-style:none; margin:0; padding:0; }
+  .history-item{ padding:14px 0; border-bottom:1px solid var(--border); }
+  .history-item:last-child{ border-bottom:none; }
+  .history-item .meta{ display:flex; gap:10px; font-size:11px; color:var(--ink-faint); font-family:"JetBrains Mono", monospace; margin-bottom:4px; }
+  .history-item .note{ font-size:13px; }
+
+  .actions{ display:flex; gap:12px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; border:1px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+  .btn-secondary{ background:var(--surface); color:var(--ink); border-color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </div>
+    <span class="header-status">モック表示 ／ タブ切替のみ動作します</span>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="モック_スタート画面.html">スタート</a>
+    <a href="モック_ダッシュボード.html">ダッシュボード</a>
+    <a href="モック_車両一覧.html">車両一覧</a>
+    <a href="モック_登録編集フォーム.html">登録・編集</a>
+  </nav>
+
+  <main>
+    <div class="card-head">
+      <div class="card-head-top">
+        <div>
+          <div class="vehicle-id">V-014</div>
+          <div class="vehicle-name">いすゞ エルフ</div>
+          <div class="vehicle-meta">札幌100 あ 12-34　／　総務部</div>
+        </div>
+        <span class="status-pill status-sold">売却済</span>
+      </div>
+      <div class="warn-banner">
+        <span class="icon">!</span>
+        <div class="text">
+          <strong>要確認：保険契約の終了状況を確認してください</strong>
+          車両状態が「売却済」ですが、保険契約は「有効」のままになっています。
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <input class="tab-radio" type="radio" name="detail-tabs" id="tab-basic" checked>
+      <input class="tab-radio" type="radio" name="detail-tabs" id="tab-own">
+      <input class="tab-radio" type="radio" name="detail-tabs" id="tab-insurance">
+      <input class="tab-radio" type="radio" name="detail-tabs" id="tab-history">
+      <div class="tab-bar">
+        <label class="tab-label" for="tab-basic">基本情報</label>
+        <label class="tab-label" for="tab-own">所有／リース</label>
+        <label class="tab-label" for="tab-insurance">保険</label>
+        <label class="tab-label" for="tab-history">変更履歴</label>
+      </div>
+      <div class="tab-content">
+        <div class="tab-panel" id="panel-basic">
+          <dl class="field-grid">
+            <dt>車種</dt><dd>いすゞ エルフ</dd>
+            <dt>ナンバー</dt><dd>札幌100 あ 12-34</dd>
+            <dt>使用部署</dt><dd>総務部</dd>
+            <dt>用途</dt><dd>資材配送</dd>
+            <dt>稼働状態</dt><dd>売却済</dd>
+            <dt>車検満了日</dt><dd>2026年11月20日</dd>
+          </dl>
+        </div>
+        <div class="tab-panel" id="panel-own">
+          <dl class="field-grid">
+            <dt>区分</dt><dd>所有</dd>
+            <dt>購入日</dt><dd>2023年6月15日</dd>
+          </dl>
+        </div>
+        <div class="tab-panel" id="panel-insurance">
+          <dl class="field-grid">
+            <dt>契約状況</dt><dd>有効</dd>
+            <dt>保険会社</dt><dd>シマエナガ損害保険株式会社</dd>
+            <dt>契約期間</dt><dd>2026年4月1日 〜 2027年3月31日</dd>
+          </dl>
+        </div>
+        <div class="tab-panel" id="panel-history">
+          <ul class="history-list">
+            <li class="history-item">
+              <div class="meta"><span>2026-08-20</span><span>入力：佐藤（総務部）</span></div>
+              <div class="note">稼働状態を「稼働中」から「売却済」に変更</div>
+            </li>
+            <li class="history-item">
+              <div class="meta"><span>2024-03-08</span><span>入力：山田（工事第一課）</span></div>
+              <div class="note">接触事故が発生し、保険を使用して修理を実施（修理費用：148,000円）</div>
+            </li>
+            <li class="history-item">
+              <div class="meta"><span>2023-06-15</span><span>入力：田中（総務部）</span></div>
+              <div class="note">新規登録</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="モック_登録編集フォーム.html">編集する</a>
+      <a class="btn btn-secondary" href="モック_車両一覧.html">一覧に戻る</a>
+    </div>
+  </main>
+
+</body>
+</html>

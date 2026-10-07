@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>車両カルテ</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E5631'/%3E%3Ctext x='32' y='46' font-size='40' font-weight='900' text-anchor='middle' fill='%23ffffff' font-family='Zen Kaku Gothic New, Yu Gothic, Meiryo, sans-serif'%3E%E8%BB%8A%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <button type="button" class="brand" data-view="dashboard" title="ダッシュボードに戻る">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </button>
+    <nav class="main-nav">
+      <button type="button" class="nav-link" data-view="dashboard">ダッシュボード</button>
+      <button type="button" class="nav-link" data-view="list">車両一覧</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ダッシュボード -->
+    <section id="view-dashboard" class="view">
+      <div class="dash-head">
+        <div class="eyebrow">DASHBOARD</div>
+        <h1>ダッシュボード</h1>
+        <p class="view-note">保有車両の状況と、対応が必要な事項を一目で確認できます。</p>
+      </div>
+
+      <!-- 入力途中の下書き（あるときだけ表示） -->
+      <div class="draft-notice" id="draft-notice" hidden>
+        <div class="draft-notice-head">入力途中の下書きがあります</div>
+        <ul class="draft-list" id="draft-list"></ul>
+      </div>
+
+      <div class="summary-strip">
+        <div class="summary-item"><div class="num" id="sum-owned">0</div><div class="label">保有台数</div></div>
+        <div class="summary-item"><div class="num" id="sum-active">0</div><div class="label">稼働中</div></div>
+        <div class="summary-item"><div class="num" id="sum-paused">0</div><div class="label">休止中</div></div>
+        <div class="summary-item warn"><div class="num" id="sum-insurance">0</div><div class="label">保険期限が近い／超過</div></div>
+        <div class="summary-item warn"><div class="num" id="sum-shaken">0</div><div class="label">車検期限が近い／超過</div></div>
+        <div class="summary-item warn"><div class="num" id="sum-issues">0</div><div class="label">要確認あり</div></div>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-head"><h2>保険期限が近い／超過している車両</h2><span class="count" id="insurance-count"></span></div>
+          <ul class="item-list" id="insurance-list"></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>車検期限が近い／超過している車両</h2><span class="count" id="shaken-count"></span></div>
+          <ul class="item-list" id="shaken-list"></ul>
+        </div>
+      </div>
+
+      <div class="panel panel-wide">
+        <div class="panel-head"><h2>整合性チェックで要確認となっている車両</h2><span class="count" id="issues-count"></span></div>
+        <ul class="item-list" id="issues-list"></ul>
+      </div>
+
+      <div class="view-actions">
+        <button type="button" class="btn btn-primary" data-view="list">車両一覧を見る</button>
+        <button type="button" class="btn btn-secondary" data-view="form" data-mode="new">新規登録</button>
+      </div>
+
+      <!-- 動作確認用（本番運用時は sample-data.js とあわせて外す） -->
+      <div class="dev-tools">
+        <span>動作確認用</span>
+        <button type="button" class="btn-link" id="add-sample">サンプルデータ（17台）を追加</button>
+      </div>
+    </section>
+
+    <!-- 車両一覧 -->
+    <section id="view-list" class="view" hidden>
+      <div class="page-head">
+        <h1>車両一覧</h1>
+        <button type="button" class="btn btn-primary" data-view="form" data-mode="new">＋ 新規登録</button>
+      </div>
+
+      <div class="filter-bar">
+        <select id="filter-dept">
+          <option value="">部署：すべて</option>
+          <option>総務部</option>
+          <option>営業部</option>
+          <option>工事第一課</option>
+          <option>工事第二課</option>
+          <option>運行管理部</option>
+        </select>
+        <select id="filter-usage">
+          <option value="">用途：すべて</option>
+        </select>
+        <select id="filter-status">
+          <option value="">稼働状態：すべて</option>
+          <option>稼働中</option>
+          <option>休止中</option>
+          <option>売却済</option>
+          <option>廃車</option>
+        </select>
+        <select id="filter-ownership">
+          <option value="">所有／リース：すべて</option>
+          <option>所有</option>
+          <option>リース</option>
+        </select>
+        <input type="text" id="filter-keyword" placeholder="フリーワード検索（車両ID・車種・ナンバーなど）">
+      </div>
+
+      <p class="result-count" id="list-result-count"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>車両ID</th><th>車種</th><th>ナンバー</th><th>使用部署</th><th>用途</th><th>稼働状態</th><th>要確認</th>
+            </tr>
+          </thead>
+          <tbody id="vehicle-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 車両詳細（車両カルテ） -->
+    <section id="view-detail" class="view" hidden>
+      <div class="card-head">
+        <div class="card-head-top">
+          <div>
+            <div class="vehicle-id" id="detail-id"></div>
+            <div class="vehicle-name" id="detail-model"></div>
+            <div class="vehicle-meta" id="detail-meta"></div>
+          </div>
+          <span class="status-pill" id="detail-status"></span>
+        </div>
+        <!-- 要確認警告（整合性チェックはステップ6で実装） -->
+        <div class="warn-banner" id="detail-warning" hidden>
+          <span class="icon">!</span>
+          <div class="text" id="detail-warning-text"></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab-bar" role="tablist">
+          <button type="button" class="tab-button" role="tab" data-tab="basic">基本情報</button>
+          <button type="button" class="tab-button" role="tab" data-tab="own">所有／リース</button>
+          <button type="button" class="tab-button" role="tab" data-tab="insurance">保険</button>
+          <button type="button" class="tab-button" role="tab" data-tab="history">変更履歴</button>
+        </div>
+        <div class="tab-panel" id="panel-basic" role="tabpanel">
+          <dl class="field-grid" id="detail-basic"></dl>
+        </div>
+        <div class="tab-panel" id="panel-own" role="tabpanel" hidden>
+          <dl class="field-grid" id="detail-own"></dl>
+        </div>
+        <div class="tab-panel" id="panel-insurance" role="tabpanel" hidden>
+          <dl class="field-grid" id="detail-insurance"></dl>
+        </div>
+        <div class="tab-panel" id="panel-history" role="tabpanel" hidden>
+          <p class="history-count" id="history-count"></p>
+          <ul class="history-list" id="history-list"></ul>
+        </div>
+      </div>
+
+      <div class="view-actions">
+        <button type="button" class="btn btn-primary" data-view="form" data-mode="edit">編集する</button>
+        <button type="button" class="btn btn-secondary" data-view="list">一覧に戻る</button>
+      </div>
+    </section>
+
+    <!-- 登録・編集フォーム -->
+    <section id="view-form" class="view" hidden>
+      <h1>登録・編集フォーム</h1>
+
+      <form id="vehicle-form" novalidate>
+        <fieldset>
+          <legend>基本情報</legend>
+          <div class="field-row">
+            <label for="field-id">社内車両ID</label>
+            <div>
+              <input type="text" id="field-id" name="id">
+              <p class="field-hint">使用部署のコード（総務部 GA／営業部 SL／工事第一課 C1／工事第二課 C2／運行管理部 OP）＋連番で自動採番します。</p>
+              <p class="field-hint field-hint-warn" id="id-change-note" hidden></p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="field-model">車種</label>
+            <input type="text" id="field-model" name="model" placeholder="例：いすゞ エルフ">
+          </div>
+          <div class="field-row">
+            <label for="field-plate">ナンバー</label>
+            <input type="text" id="field-plate" name="plate" placeholder="例：札幌100 あ 12-34">
+          </div>
+          <div class="field-row">
+            <label for="field-dept">使用部署</label>
+            <select id="field-dept" name="dept">
+              <option>総務部</option>
+              <option>営業部</option>
+              <option>工事第一課</option>
+              <option>工事第二課</option>
+              <option>運行管理部</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <label for="field-usage">用途</label>
+            <input type="text" id="field-usage" name="usage" placeholder="例：資材配送">
+          </div>
+          <div class="field-row">
+            <label for="field-status">稼働状態</label>
+            <select id="field-status" name="status">
+              <option>稼働中</option>
+              <option>休止中</option>
+              <option>売却済</option>
+              <option>廃車</option>
+            </select>
+          </div>
+          <!-- 売却済・廃車のときだけ表示 -->
+          <div class="conditional-fields" id="disposal-fields" hidden>
+            <div class="field-row">
+              <label for="field-disposal-date" id="label-disposal-date">売却日</label>
+              <input type="date" id="field-disposal-date" name="disposalDate">
+            </div>
+            <div class="field-row">
+              <label for="field-disposal-partner" id="label-disposal-partner">売却先</label>
+              <input type="text" id="field-disposal-partner" name="disposalPartner" placeholder="例：北斗オートセンター株式会社">
+            </div>
+            <div class="field-row" id="row-disposal-amount">
+              <label for="field-disposal-amount">売却金額（円）</label>
+              <input type="number" id="field-disposal-amount" name="disposalAmount" min="0" step="1" placeholder="例：350000">
+            </div>
+            <div class="field-row">
+              <label for="field-disposal-note">理由・メモ</label>
+              <input type="text" id="field-disposal-note" name="disposalNote" placeholder="例：車両入替のため下取り">
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="field-shaken">車検満了日</label>
+            <input type="date" id="field-shaken" name="shakenExpiresAt">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>所有／リース</legend>
+          <div class="field-row">
+            <label>区分</label>
+            <div class="radio-group">
+              <label><input type="radio" name="ownership" id="ownership-owned" checked> 所有</label>
+              <label><input type="radio" name="ownership" id="ownership-lease"> リース</label>
+            </div>
+          </div>
+          <div class="conditional-fields" id="owned-fields">
+            <div class="field-row">
+              <label for="field-purchase-date">購入日</label>
+              <input type="date" id="field-purchase-date" name="purchaseDate">
+            </div>
+          </div>
+          <div class="conditional-fields" id="lease-fields" hidden>
+            <div class="field-row">
+              <label for="field-lease-start">リース開始日</label>
+              <input type="date" id="field-lease-start" name="leaseStart">
+            </div>
+            <div class="field-row">
+              <label for="field-lease-end">リース終了日</label>
+              <input type="date" id="field-lease-end" name="leaseEnd">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>保険情報</legend>
+          <div class="field-row">
+            <label><input type="checkbox" id="field-has-insurance" checked> 保険契約あり</label>
+          </div>
+          <div class="conditional-fields" id="insurance-fields">
+            <div class="field-row">
+              <label for="field-insurance-company">保険会社</label>
+              <select id="field-insurance-company" name="insuranceCompany">
+                <option>シマエナガ損害保険株式会社</option>
+                <option>丹頂総合保険株式会社</option>
+                <option>美唄PIPA保険サービス</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label for="field-insurance-start">契約期間（開始）</label>
+              <input type="date" id="field-insurance-start" name="insuranceStart">
+            </div>
+            <div class="field-row">
+              <label for="field-insurance-end">契約期間（終了）</label>
+              <input type="date" id="field-insurance-end" name="insuranceEnd">
+            </div>
+            <div class="field-row">
+              <label for="field-premium-cycle">保険料の支払方法</label>
+              <select id="field-premium-cycle" name="premiumCycle">
+                <option>年払い</option>
+                <option>月払い</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label for="field-insurance-premium">保険料（1回あたり・円）</label>
+              <input type="number" id="field-insurance-premium" name="insurancePremium" min="0" step="1" placeholder="例：86400">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>操作者情報</legend>
+          <div class="field-row">
+            <label for="field-editor-dept">操作者の部署</label>
+            <select id="field-editor-dept" name="editorDept">
+              <option>総務部</option>
+              <option>営業部</option>
+              <option>工事第一課</option>
+              <option>工事第二課</option>
+              <option>運行管理部</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <label for="field-editor-name">操作者名</label>
+            <input type="text" id="field-editor-name" name="editorName" placeholder="例：田中">
+          </div>
+        </fieldset>
+
+        <p id="form-error" class="form-error" hidden></p>
+
+        <div class="view-actions">
+          <button type="button" class="btn btn-secondary" id="form-cancel">キャンセル</button>
+          <button type="button" class="btn btn-secondary" id="form-save-draft">下書き保存して閉じる</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- 1日1回の要確認アラート -->
+  <dialog id="issue-alert" class="issue-alert">
+    <h2>要確認の車両があります</h2>
+    <p class="view-note">以下の車両に確認が必要な項目があります。車両を選ぶと詳細を開きます。</p>
+    <ul class="issue-alert-list" id="issue-alert-list"></ul>
+    <div class="view-actions">
+      <button type="button" class="btn btn-secondary" id="issue-alert-close">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- 操作結果のお知らせ（数秒で消える） -->
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <!-- 保存時の重複警告（選択肢つき） -->
+  <dialog id="choice-dialog" class="issue-alert">
+    <h2 id="choice-title"></h2>
+    <p class="choice-message" id="choice-message"></p>
+    <div class="view-actions choice-actions" id="choice-actions"></div>
+  </dialog>
+
+  <!-- 重複登録の統合 -->
+  <dialog id="merge-dialog" class="issue-alert merge-dialog">
+    <h2>重複登録の統合</h2>
+    <p class="view-note">同じナンバーで登録されている2台を1台にまとめます。残す車両を選んでください。もう一方の車両IDは欠番になり、変更履歴は残す車両に引き継がれます。</p>
+    <div class="merge-options" id="merge-options"></div>
+    <div id="merge-diffs"></div>
+    <div class="merge-editor">
+      <select id="merge-editor-dept"></select>
+      <input type="text" id="merge-editor-name" placeholder="操作者名（例：田中）">
+    </div>
+    <p class="form-error" id="merge-error" hidden></p>
+    <div class="view-actions">
+      <button type="button" class="btn btn-secondary" id="merge-cancel">キャンセル</button>
+      <button type="button" class="btn btn-primary" id="merge-submit">統合する</button>
+    </div>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

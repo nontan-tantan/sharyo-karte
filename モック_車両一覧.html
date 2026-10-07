@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両カルテ ― 車両一覧（モック）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EDF1EC;
+    --ink:#1B2320; --ink-muted:#5B6560; --ink-faint:#8B958F;
+    --accent:#1E5631; --accent-strong:#153F24; --accent-soft:#E1ECE4;
+    --warning:#B8720A; --warning-soft:#FBEEDA; --warning-border:#EAD3A6;
+    --border:#DCE3DD; --border-strong:#C4CFC6;
+    --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-width:1000px; background:var(--bg); color:var(--ink); font-family:"Noto Sans JP", sans-serif; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:20px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{ font-family:"Zen Kaku Gothic New", sans-serif; font-weight:900; font-size:22px; color:var(--accent-strong); }
+  .brand-sub{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.06em; }
+  .header-status{ font-size:12px; color:var(--ink-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 14px; }
+
+  .mock-nav{ display:flex; gap:4px; padding:10px 48px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  .mock-nav a{ font-size:13px; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:8px 16px; border-radius:7px; }
+  .mock-nav a.current{ background:var(--surface); color:var(--accent-strong); box-shadow:var(--shadow); }
+  .mock-nav a:hover:not(.current){ color:var(--ink); }
+
+  main{ max-width:1180px; margin:0 auto; padding:40px 32px 64px; }
+  .page-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; }
+  .page-head .eyebrow{ font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.08em; margin-bottom:8px; }
+  .page-head h1{ font-family:"Zen Kaku Gothic New", sans-serif; font-size:26px; font-weight:900; margin:0 0 6px; }
+  .page-head p{ margin:0; font-size:13px; color:var(--ink-muted); }
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; border:1px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+
+  .filter-bar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:20px; box-shadow:var(--shadow); }
+  .filter-bar select, .filter-bar input[type="text"]{ font:inherit; font-size:13px; padding:9px 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); color:var(--ink); }
+  .filter-bar input[type="text"]{ flex:1; min-width:200px; }
+  .filter-bar .btn-search{ background:var(--surface-2); color:var(--ink); border:1px solid var(--border-strong); padding:9px 18px; border-radius:7px; font-size:13px; font-weight:700; }
+  .result-count{ font-size:12px; color:var(--ink-faint); margin-bottom:10px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  thead th{ text-align:left; font-size:12px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:12px 16px; border-bottom:1px solid var(--border); }
+  tbody td{ padding:13px 16px; font-size:13px; border-bottom:1px solid var(--border); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr{ cursor:pointer; }
+  tbody tr:hover td{ background:var(--surface-2); }
+  .id-cell{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); }
+  .status-pill{ display:inline-block; font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; }
+  .status-active{ background:var(--accent-soft); color:var(--accent-strong); }
+  .status-paused{ background:var(--surface-2); color:var(--ink-muted); border:1px solid var(--border-strong); }
+  .status-sold{ background:var(--warning-soft); color:var(--warning); }
+  .flag-cell{ text-align:center; }
+  .flag-icon{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; background:var(--warning-soft); color:var(--warning); font-size:12px; font-weight:700; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </div>
+    <span class="header-status">モック表示 ／ 機能は動作しません</span>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="モック_スタート画面.html">スタート</a>
+    <a href="モック_ダッシュボード.html">ダッシュボード</a>
+    <a href="モック_車両一覧.html" class="current">車両一覧</a>
+    <a href="モック_登録編集フォーム.html">登録・編集</a>
+  </nav>
+
+  <main>
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">VEHICLE LIST</div>
+        <h1>車両一覧</h1>
+        <p>保有車両を条件で絞り込んで確認できます。</p>
+      </div>
+      <a class="btn btn-primary" href="モック_登録編集フォーム.html">＋ 新規登録</a>
+    </div>
+
+    <div class="filter-bar">
+      <select><option>部署：すべて</option><option>総務部</option><option>営業部</option><option>工事第一課</option><option>工事第二課</option><option>運行管理部</option></select>
+      <select><option>用途：すべて</option><option>資材配送</option><option>得意先配送</option><option>資材運搬</option><option>巡回</option><option>長距離輸送</option></select>
+      <select><option>稼働状態：すべて</option><option>稼働中</option><option>休止中</option><option>売却済</option></select>
+      <select><option>所有／リース：すべて</option><option>所有</option><option>リース</option></select>
+      <input type="text" placeholder="フリーワード検索（車両ID・ナンバーなど）">
+      <button class="btn-search">検索</button>
+    </div>
+
+    <p class="result-count">全42件中　8件を表示（架空データ）</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>車両ID</th><th>車種</th><th>ナンバー</th><th>使用部署</th><th>用途</th><th>稼働状態</th><th>要確認</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-014</td><td>いすゞ エルフ</td><td>札幌100 あ 12-34</td><td>総務部</td><td>資材配送</td>
+          <td><span class="status-pill status-sold">売却済</span></td>
+          <td class="flag-cell"><span class="flag-icon">!</span></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-002</td><td>日野 デュトロ</td><td>函館500 さ 56-78</td><td>営業部</td><td>得意先配送</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-021</td><td>トヨタ ハイエース</td><td>旭川300 か 90-12</td><td>工事第一課</td><td>資材運搬</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-005</td><td>三菱ふそう キャンター</td><td>帯広800 た 34-56</td><td>総務部</td><td>巡回</td>
+          <td><span class="status-pill status-paused">休止中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-030</td><td>日産 NV350キャラバン</td><td>釧路100 や 11-22</td><td>工事第二課</td><td>現場移動</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-011</td><td>いすゞ フォワード</td><td>北見700 ら 45-67</td><td>運行管理部</td><td>長距離輸送</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-008</td><td>トヨタ ダイナ</td><td>室蘭400 ま 78-90</td><td>総務部</td><td>資材配送</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+        <tr onclick="location.href='モック_車両詳細.html'">
+          <td class="id-cell">V-019</td><td>日野 レンジャー</td><td>苫小牧900 ん 01-23</td><td>運行管理部</td><td>長距離輸送</td>
+          <td><span class="status-pill status-active">稼働中</span></td>
+          <td class="flag-cell"></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+</body>
+</html>

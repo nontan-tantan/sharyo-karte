@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両カルテ ― 登録・編集フォーム（モック）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EDF1EC;
+    --ink:#1B2320; --ink-muted:#5B6560; --ink-faint:#8B958F;
+    --accent:#1E5631; --accent-strong:#153F24; --accent-soft:#E1ECE4;
+    --warning:#B8720A; --warning-soft:#FBEEDA;
+    --border:#DCE3DD; --border-strong:#C4CFC6;
+    --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-width:960px; background:var(--bg); color:var(--ink); font-family:"Noto Sans JP", sans-serif; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:20px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{ font-family:"Zen Kaku Gothic New", sans-serif; font-weight:900; font-size:22px; color:var(--accent-strong); }
+  .brand-sub{ font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.06em; }
+  .header-status{ font-size:12px; color:var(--ink-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 14px; }
+
+  .mock-nav{ display:flex; gap:4px; padding:10px 48px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  .mock-nav a{ font-size:13px; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:8px 16px; border-radius:7px; }
+  .mock-nav a.current{ background:var(--surface); color:var(--accent-strong); box-shadow:var(--shadow); }
+  .mock-nav a:hover:not(.current){ color:var(--ink); }
+
+  main{ max-width:760px; margin:0 auto; padding:40px 32px 64px; }
+  .page-head{ margin-bottom:24px; }
+  .page-head .eyebrow{ font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.08em; margin-bottom:8px; }
+  .page-head h1{ font-family:"Zen Kaku Gothic New", sans-serif; font-size:26px; font-weight:900; margin:0 0 6px; }
+  .page-head p{ margin:0; font-size:13px; color:var(--ink-muted); }
+
+  form{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+  fieldset{ border:0; margin:0; padding:26px 28px; border-bottom:1px solid var(--border); }
+  fieldset:last-of-type{ border-bottom:none; }
+  legend{ font-size:12px; font-weight:700; color:var(--accent-strong); letter-spacing:.04em; padding:0 0 16px; }
+
+  .field-row{ display:grid; grid-template-columns:180px 1fr; align-items:center; gap:16px; margin-bottom:14px; }
+  .field-row:last-child{ margin-bottom:0; }
+  .field-row label{ font-size:13px; color:var(--ink-muted); }
+  .field-row .hint{ display:block; font-size:11px; color:var(--ink-faint); margin-top:3px; }
+  input[type="text"], input[type="date"], select{
+    font:inherit; font-size:13px; padding:10px 12px; border:1px solid var(--border-strong);
+    border-radius:7px; background:var(--surface); color:var(--ink); width:100%;
+  }
+  input[readonly]{ background:var(--surface-2); color:var(--ink-muted); }
+
+  .radio-group{ display:flex; gap:18px; }
+  .radio-group label{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); cursor:pointer; }
+
+  .toggle-radio, .toggle-check{ position:absolute; opacity:0; pointer-events:none; }
+  .conditional-fields{ display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border-strong); }
+  #ownership-owned:checked ~ .owned-fields{ display:block; }
+  #ownership-lease:checked ~ .lease-fields{ display:block; }
+  #has-insurance:checked ~ .insurance-fields{ display:block; }
+
+  .save-bar{ display:flex; align-items:center; justify-content:space-between; padding:22px 28px; background:var(--surface-2); }
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; border:1px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+  .btn-secondary{ background:var(--surface); color:var(--ink); border-color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark">車両カルテ</span>
+      <span class="brand-sub">SHARYO KARTE</span>
+    </div>
+    <span class="header-status">モック表示 ／ 項目の出し分けのみ動作します</span>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="モック_スタート画面.html">スタート</a>
+    <a href="モック_ダッシュボード.html">ダッシュボード</a>
+    <a href="モック_車両一覧.html">車両一覧</a>
+    <a href="モック_登録編集フォーム.html" class="current">登録・編集</a>
+  </nav>
+
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">REGISTER / EDIT</div>
+      <h1>車両を登録する</h1>
+      <p>新規登録・編集は同じフォームを使用します。「所有／リース」で「リース」を選ぶとリース契約期間が、「保険契約あり」にチェックすると保険情報の入力欄が表示されます。</p>
+    </div>
+
+    <form onsubmit="return false;">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="field-row">
+          <label>社内車両ID</label>
+          <div>
+            <input type="text" placeholder="V-043">
+            <span class="hint">新規登録時のみ入力できます（編集時は表示のみ）</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>車種</label>
+          <input type="text" placeholder="例：いすゞ エルフ">
+        </div>
+        <div class="field-row">
+          <label>ナンバー</label>
+          <input type="text" placeholder="例：札幌100 あ 12-34">
+        </div>
+        <div class="field-row">
+          <label>使用部署</label>
+          <select><option>総務部</option><option>営業部</option><option>工事第一課</option><option>工事第二課</option><option>運行管理部</option></select>
+        </div>
+        <div class="field-row">
+          <label>用途</label>
+          <input type="text" placeholder="例：資材配送">
+        </div>
+        <div class="field-row">
+          <label>稼働状態</label>
+          <select><option>稼働中</option><option>休止中</option><option>売却済</option></select>
+        </div>
+        <div class="field-row">
+          <label>車検満了日</label>
+          <input type="date">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>所有／リース</legend>
+        <div class="field-row">
+          <label>区分</label>
+          <div class="radio-group">
+            <label><input class="toggle-radio" type="radio" name="ownership" id="ownership-owned" checked>所有</label>
+            <label><input class="toggle-radio" type="radio" name="ownership" id="ownership-lease">リース</label>
+          </div>
+        </div>
+        <div class="conditional-fields owned-fields">
+          <div class="field-row">
+            <label>購入日</label>
+            <input type="date">
+          </div>
+        </div>
+        <div class="conditional-fields lease-fields">
+          <div class="field-row">
+            <label>リース開始日</label>
+            <input type="date">
+          </div>
+          <div class="field-row">
+            <label>リース終了日</label>
+            <input type="date">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>保険情報</legend>
+        <div class="field-row">
+          <label>契約状況</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+            <input class="toggle-check" type="checkbox" id="has-insurance" checked>保険契約あり
+          </label>
+        </div>
+        <div class="conditional-fields insurance-fields">
+          <div class="field-row">
+            <label>保険会社</label>
+            <input type="text" placeholder="例：シマエナガ損害保険株式会社">
+          </div>
+          <div class="field-row">
+            <label>契約期間（開始）</label>
+            <input type="date">
+          </div>
+          <div class="field-row">
+            <label>契約期間（終了）</label>
+            <input type="date">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>操作者情報</legend>
+        <div class="field-row">
+          <label>操作者名</label>
+          <div>
+            <input type="text" placeholder="例：田中（総務部）">
+            <span class="hint">アカウント機能は使わず、変更履歴に記録するための記名です</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="save-bar">
+        <a class="btn btn-secondary" href="モック_車両詳細.html">キャンセル</a>
+        <a class="btn btn-primary" href="モック_車両詳細.html">保存する</a>
+      </div>
+    </form>
+  </main>
+
+</body>
+</html>
