@@ -15,6 +15,12 @@ function showView(name) {
   window.scrollTo(0, 0);
 }
 
+// スクロールしたら、固定したヘッダーの下に影を付けて内容と区別する
+const appHeader = document.querySelector(".app-header");
+window.addEventListener("scroll", () => {
+  appHeader.classList.toggle("is-scrolled", window.scrollY > 0);
+}, { passive: true });
+
 function todayString() {
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
