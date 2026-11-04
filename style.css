@@ -15,10 +15,9 @@
   --warning-border:#EAD3A6;
   --border:#DCE3DD;
   --border-strong:#C4CFC6;
-  --leaf:#7DB36A;
-  --land-far:#DCEBD5;
-  --land-near:#C9E1BE;
-  --tree:#8DBF7A;
+  --leaf:#4E9F3D;
+  --danger:#D2462E;
+  --danger-soft:#FBE4DF;
   --shadow: 0 1px 2px rgba(20,30,24,0.04), 0 8px 24px -12px rgba(20,30,24,0.12);
 }
 
@@ -42,29 +41,8 @@ body{
 }
 .icon-sprite{ position:absolute; width:0; height:0; overflow:hidden; }
 .brand{ display:flex; align-items:center; gap:10px; font:inherit; text-align:left; background:none; border:none; padding:0; cursor:pointer; }
-.brand-logo{ width:60px; height:42px; flex-shrink:0; }
-.logo-body{ fill:var(--accent); }
-.logo-window{ fill:var(--accent-soft); }
-.logo-hub{ fill:var(--surface); }
-.logo-leaf{ fill:var(--leaf); }
-.logo-vein{ fill:none; stroke:var(--surface); stroke-width:1.2; stroke-linecap:round; opacity:.8; }
-.brand-text{ display:flex; flex-direction:column; line-height:1.1; }
-.brand:hover .brand-mark{ color:var(--accent); }
+.brand-logo{ display:block; width:auto; height:58px; margin:-6px 0; }
 .brand:focus-visible{ outline:2px solid var(--accent); outline-offset:4px; border-radius:4px; }
-.brand-mark{
-  font-family:"Zen Kaku Gothic New", sans-serif;
-  font-weight:900;
-  font-size:22px;
-  color:var(--accent);
-  letter-spacing:.04em;
-}
-.brand-sub{
-  font-size:10px;
-  font-weight:700;
-  color:var(--accent);
-  letter-spacing:.14em;
-  margin-top:2px;
-}
 .main-nav{ display:flex; gap:4px; }
 .nav-link{
   display:inline-flex;
@@ -227,24 +205,18 @@ tbody tr:hover td{ background:var(--surface-2); }
 
 /* ダッシュボード */
 #view-dashboard, #view-list{ max-width:1100px; }
-.dash-head{ position:relative; display:flex; align-items:center; gap:18px; min-height:130px; margin-bottom:24px; }
+.dash-head{ position:relative; display:flex; align-items:center; gap:18px; min-height:150px; margin-bottom:24px; padding-bottom:20px; }
 .dash-head > div{ position:relative; z-index:1; }
 .dash-head-icon{ position:relative; z-index:1; flex-shrink:0; width:64px; height:64px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); }
 .dash-head-icon svg{ width:36px; height:36px; fill:#fff; }
 .dash-head h1{ font-size:28px; margin:0 0 6px; }
 .dash-head .view-note{ margin:0; }
+/* ブランドデザインシートのヘッダーイラスト。左側は見出しと重なるので薄くする */
 .dash-landscape{
-  position:absolute; right:0; bottom:-8px; width:min(620px, 62%); height:150px;
-  -webkit-mask-image:linear-gradient(to right, transparent, #000 30%);
-  mask-image:linear-gradient(to right, transparent, #000 30%);
+  position:absolute; right:0; bottom:0; width:100%; height:auto; pointer-events:none;
+  -webkit-mask-image:linear-gradient(to right, rgba(0,0,0,.25), #000 55%);
+  mask-image:linear-gradient(to right, rgba(0,0,0,.25), #000 55%);
 }
-.land-far{ fill:var(--land-far); }
-.land-near{ fill:var(--land-near); }
-.land-road{ fill:var(--surface); opacity:.75; }
-.land-line{ fill:none; stroke:var(--land-near); stroke-width:2; stroke-linecap:round; }
-.land-tree{ fill:var(--tree); }
-.land-tree rect{ fill:#7E9A74; }
-.land-car{ fill:var(--accent); }
 
 .summary-strip{ display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; margin-bottom:32px; }
 .summary-item{ display:grid; grid-template-columns:auto 1fr; align-items:center; column-gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:18px 18px 16px; }
@@ -253,8 +225,10 @@ tbody tr:hover td{ background:var(--surface-2); }
 .summary-item .label{ grid-column:1 / -1; margin-top:10px; font-size:12px; color:var(--ink-muted); }
 .summary-item.is-muted .summary-icon{ fill:var(--ink-muted); }
 .summary-item.warn .num, .summary-item.warn .summary-icon{ color:var(--warning); fill:var(--warning); }
+.summary-item.is-active .summary-icon{ fill:var(--leaf); }
+.summary-item.is-insurance .summary-icon{ fill:var(--danger); }
 .summary-item.warn.is-zero .num{ color:var(--accent); }
-.summary-item.warn.is-zero .summary-icon{ fill:var(--accent); }
+.summary-item.warn.is-zero .summary-icon{ fill:var(--leaf); }
 
 .panels{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
 .panel{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
@@ -279,7 +253,7 @@ tbody tr:hover td{ background:var(--surface-2); }
 .item-main .name{ font-size:14px; font-weight:700; }
 .item-main .sub{ font-size:12px; color:var(--ink-muted); margin-top:3px; }
 .item-badge{ font-size:12px; font-weight:700; color:var(--warning); background:var(--warning-soft); border:1px solid var(--warning-border); padding:4px 10px; border-radius:999px; white-space:nowrap; }
-.item-badge.is-overdue{ color:#fff; background:var(--warning); border-color:var(--warning); }
+.item-badge.is-overdue{ color:#fff; background:var(--danger); border-color:var(--danger); }
 .item-empty{ padding:18px 20px; font-size:13px; color:var(--ink-faint); }
 
 .panel-wide{ margin-bottom:36px; }
@@ -320,8 +294,7 @@ tbody tr:hover td{ background:var(--surface-2); }
   .dash-head-icon{ width:48px; height:48px; }
   .dash-head-icon svg{ width:28px; height:28px; }
   .dash-landscape{ display:none; }
-  .brand-logo{ width:42px; height:30px; }
-  .brand-mark{ font-size:19px; }
+  .brand-logo{ height:38px; }
 
   .page-head{ flex-wrap:wrap; gap:12px; }
   .filter-bar select, .filter-bar input[type="text"]{ flex:1 1 100%; min-width:0; }
