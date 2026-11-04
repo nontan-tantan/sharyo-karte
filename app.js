@@ -89,6 +89,8 @@ function updateOwnershipFields() {
 function updateDisposalFields() {
   const status = document.getElementById("field-status").value;
   const isScrapped = status === "廃車";
+  // 売却済・廃車の車両は、車検満了日がなくても保存できる
+  document.getElementById("shaken-req").hidden = isRetired({ status });
   document.getElementById("disposal-fields").hidden = !isRetired({ status });
   document.getElementById("label-disposal-date").textContent = isScrapped ? "廃車日" : "売却日";
   document.getElementById("label-disposal-partner").textContent = isScrapped ? "引取業者" : "売却先";
@@ -178,6 +180,8 @@ function fillLastEditor(deptId, nameId) {
 function enterFormMode(mode) {
   document.getElementById("vehicle-form").reset();
   clearFormError();
+  const editing = mode === "edit" && currentVehicleId;
+  document.getElementById("form-title").textContent = editing ? `車両の編集（${currentVehicleId}）` : "新規登録";
   fillLastEditor("field-editor-dept", "field-editor-name");
 
   const idField = document.getElementById("field-id");
