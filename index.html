@@ -98,7 +98,10 @@
           <span class="page-icon"><svg aria-hidden="true"><use href="#i-car"/></svg></span>
           <h1>車両一覧</h1>
         </div>
-        <button type="button" class="btn btn-primary" data-view="form" data-mode="new">＋ 新規登録</button>
+        <div class="page-actions">
+          <button type="button" class="btn btn-secondary" id="open-import">CSVで一括取込</button>
+          <button type="button" class="btn btn-primary" data-view="form" data-mode="new">＋ 新規登録</button>
+        </div>
       </div>
 
       <div class="filter-bar">
@@ -436,7 +439,38 @@
       <button type="button" class="btn btn-primary" id="cancel-submit">取り消す</button>
     </div>
   </dialog>
+  <!-- CSVでの一括取込 -->
+  <dialog id="import-dialog" class="issue-alert merge-dialog import-dialog">
+    <h2>CSVで一括取込</h2>
+    <ol class="import-steps">
+      <li>
+        <strong>ひな形をダウンロードして、今の台帳から車両を貼り付けます</strong>
+        <span>1行目（列の見出し）は変えずに、2行目以降に1台ずつ入力してください。「【記入例】」の行は取り込まれません。Excelで「CSV（コンマ区切り）」として保存すれば、そのまま読み込めます。</span>
+        <button type="button" class="btn btn-secondary btn-small" id="import-template">ひな形（CSV）をダウンロード</button>
+      </li>
+      <li>
+        <strong>保存したCSVファイルを選びます</strong>
+        <input type="file" id="import-file" accept=".csv,text/csv">
+      </li>
+    </ol>
+    <div id="import-result" hidden>
+      <p class="import-summary" id="import-summary"></p>
+      <div id="import-errors"></div>
+      <div id="import-warnings"></div>
+      <div id="import-preview"></div>
+      <div class="merge-editor">
+        <select id="import-editor-dept"></select>
+        <input type="text" id="import-editor-name" placeholder="操作者名（フルネーム。例：田中 花子）">
+      </div>
+    </div>
+    <p class="form-error" id="import-error" hidden></p>
+    <div class="view-actions">
+      <button type="button" class="btn btn-secondary" id="import-close">キャンセル</button>
+      <button type="button" class="btn btn-primary" id="import-submit" disabled>取り込む</button>
+    </div>
+  </dialog>
   <script src="data.js"></script>
+  <script src="csv-import.js"></script>
   <script src="sample-data.js"></script>
   <script src="app.js"></script>
 </body>

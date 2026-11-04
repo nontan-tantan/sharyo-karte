@@ -424,6 +424,25 @@ td.col-id{ font-family:"JetBrains Mono", monospace; font-size:12px; font-weight:
 .merge-editor input{ flex:1; min-width:160px; }
 .merge-dialog .form-error{ margin:0 0 16px; }
 
+/* CSVでの一括取込 */
+.page-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.import-dialog h2{ color:var(--accent-strong); }
+.import-steps{ margin:0 0 16px; padding-left:20px; display:flex; flex-direction:column; gap:14px; font-size:13px; }
+.import-steps li strong{ display:block; margin-bottom:4px; }
+.import-steps li span{ display:block; font-size:12px; line-height:1.7; color:var(--ink-muted); margin-bottom:8px; }
+.import-summary{ font-size:14px; font-weight:700; margin:0 0 10px; color:var(--accent-strong); }
+.import-list-title{ font-size:12px; font-weight:700; margin:12px 0 4px; }
+.import-list-title.is-danger{ color:var(--danger); }
+.import-list-title.is-caution{ color:var(--warning); }
+.import-list{ margin:0 0 4px; padding:8px 12px 8px 26px; max-height:150px; overflow-y:auto; font-size:12px; line-height:1.7; border-radius:8px; }
+.import-list.is-danger{ background:var(--danger-soft); }
+.import-list.is-caution{ background:#FFF6E8; }
+.import-list.is-ok{ background:var(--surface-2); }
+.import-dialog .merge-editor{ margin-top:14px; }
+.import-dialog .form-error{ margin:0 0 16px; }
+.import-dialog .view-actions{ justify-content:flex-end; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+
 /* 登録の取り消し */
 .detail-cancel-link{ margin-left:auto; align-self:center; color:var(--ink-muted); }
 .detail-cancel-link[hidden], .btn[hidden]{ display:none; }

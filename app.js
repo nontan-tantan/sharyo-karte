@@ -1420,6 +1420,117 @@ document.getElementById("cancel-submit").addEventListener("click", (event) => {
   renderVehicleDetail();
 });
 
+// CSVでの一括取込：ひな形のダウンロード → ファイルの読み込みとチェック → 確認して取り込む
+
+let importChecked = null;
+
+function selectOptions(id) {
+  return Array.from(document.getElementById(id).options).map((option) => option.value);
+}
+
+// keepFile：ファイルを選び直したときは、選んだファイル名の表示を残す
+function resetImportDialog(keepFile = false) {
+  importChecked = null;
+  if (!keepFile) document.getElementById("import-file").value = "";
+  document.getElementById("import-result").hidden = true;
+  document.getElementById("import-error").hidden = true;
+  document.getElementById("import-submit").disabled = true;
+}
+
+document.getElementById("open-import").addEventListener("click", () => {
+  resetImportDialog();
+  const deptSelect = document.getElementById("import-editor-dept");
+  deptSelect.innerHTML = document.getElementById("field-editor-dept").innerHTML;
+  document.getElementById("import-editor-name").value = "";
+  fillLastEditor("import-editor-dept", "import-editor-name");
+  document.getElementById("import-dialog").showModal();
+});
+
+document.getElementById("import-close").addEventListener("click", () => {
+  document.getElementById("import-dialog").close();
+});
+
+document.getElementById("import-template").addEventListener("click", () => {
+  const blob = new Blob([buildImportTemplate()], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "車両カルテ_取込ひな形.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+
+function renderImportList(containerId, title, kind, items) {
+  const box = document.getElementById(containerId);
+  box.innerHTML = "";
+  if (!items.length) return;
+  const heading = document.createElement("p");
+  heading.className = `import-list-title is-${kind}`;
+  heading.textContent = title;
+  const list = document.createElement("ul");
+  list.className = `import-list is-${kind}`;
+  items.forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    list.appendChild(li);
+  });
+  box.appendChild(heading);
+  box.appendChild(list);
+}
+
+document.getElementById("import-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  resetImportDialog(true);
+  if (!file) return;
+  const errorEl = document.getElementById("import-error");
+  const result = checkImportRows(decodeCsv(await file.arrayBuffer()), {
+    depts: selectOptions("field-dept"),
+    companies: selectOptions("field-insurance-company"),
+  });
+  if (result.fatal) {
+    errorEl.textContent = result.fatal;
+    errorEl.hidden = false;
+    return;
+  }
+
+  importChecked = result;
+  const { vehicles, errors, warnings } = result;
+  document.getElementById("import-summary").textContent =
+    `取り込める車両：${vehicles.length}台` + (errors.length ? `　／　エラーのある行：${errors.length}行（取り込まれません。CSVを直して選び直してください）` : "");
+  renderImportList("import-errors", "エラーのある行", "danger",
+    errors.map(({ line, label, problems }) => `${line}行目（${label}）：${problems.join("／")}`));
+  renderImportList("import-warnings", "確認してほしい行（取り込みはされます）", "caution",
+    warnings.map(({ line, text }) => `${line}行目：${text}`));
+  renderImportList("import-preview", "取り込まれる車両", "ok",
+    vehicles.map(({ line, vehicle }) => `${line}行目：${vehicle.id || "（自動で採番）"}　${vehicle.model}　${vehicle.plate}　${vehicle.dept}`));
+  document.getElementById("import-result").hidden = false;
+  document.getElementById("import-submit").disabled = vehicles.length === 0;
+});
+
+document.getElementById("import-submit").addEventListener("click", () => {
+  if (!importChecked || !importChecked.vehicles.length) return;
+  const errorEl = document.getElementById("import-error");
+  const editorName = normalizeText(document.getElementById("import-editor-name").value);
+  const editorDept = document.getElementById("import-editor-dept").value;
+  if (!editorName) {
+    errorEl.textContent = "操作者名を入力してください。";
+    errorEl.hidden = false;
+    return;
+  }
+  if (!confirmEditorName(editorName)) return;
+  setLastEditor(editorDept, editorName);
+
+  const ids = importVehicles(importChecked.vehicles, {
+    date: todayString(),
+    time: nowTimeString(),
+    note: "一括取込（CSV）",
+    editor: `${editorName}（${editorDept}）`,
+  });
+  document.getElementById("import-dialog").close();
+  renderVehicleList();
+  const skipped = importChecked.errors.length;
+  showToast(`${ids.length}台を取り込みました。` + (skipped ? `エラーのあった${skipped}行は取り込んでいません。` : ""));
+});
+
 // 動作確認用：サンプルデータの追加（sample-data.js を外したときはボタンごと無効）
 document.getElementById("add-sample").addEventListener("click", () => {
   if (typeof addSampleVehicles !== "function") return;
