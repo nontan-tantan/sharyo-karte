@@ -170,6 +170,18 @@ function setLastEditor(dept, name) {
   }
 }
 
+// 苗字だけと思われる短い名前（スペースなしで3文字以下）のときは、フルネームにするか確認する
+// 同じ部署に同じ苗字の人がいると、変更履歴でどちらの操作か区別できなくなるため
+// このタブで一度確認して使った名前は、もう聞かない
+function confirmEditorName(name) {
+  const last = getLastEditor();
+  if (last && last.name === name) return true;
+  if (/\s/.test(name) || name.length > 3) return true;
+  return window.confirm(
+    `操作者名が「${name}」になっています。\n同じ部署に同じ苗字の方がいると、変更履歴でどなたの操作か区別できなくなります。\n\nこのまま保存しますか？（「キャンセル」を押すとフルネームに直せます）`
+  );
+}
+
 function fillLastEditor(deptId, nameId) {
   const last = getLastEditor();
   if (!last) return;
@@ -368,6 +380,10 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
   }
   if (!editorName) {
     showFormError("操作者名を入力してください。");
+    return;
+  }
+  if (!confirmEditorName(editorName)) {
+    document.getElementById("field-editor-name").focus();
     return;
   }
 
@@ -1207,6 +1223,10 @@ document.getElementById("merge-submit").addEventListener("click", () => {
     errorEl.hidden = false;
     return;
   }
+  if (!confirmEditorName(editorName)) {
+    document.getElementById("merge-editor-name").focus();
+    return;
+  }
   const editorDept = document.getElementById("merge-editor-dept").value;
   const editor = `${editorName}（${editorDept}）`;
   setLastEditor(editorDept, editorName);
@@ -1266,6 +1286,10 @@ document.getElementById("cancel-submit").addEventListener("click", (event) => {
   if (missing.length) {
     errorEl.textContent = `次の項目を入力してください：${missing.join("、")}`;
     errorEl.hidden = false;
+    return;
+  }
+  if (!confirmEditorName(editorName)) {
+    document.getElementById("cancel-editor-name").focus();
     return;
   }
   const editor = `${editorName}（${editorDept}）`;

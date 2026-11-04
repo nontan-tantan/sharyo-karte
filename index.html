@@ -357,7 +357,10 @@
           </div>
           <div class="field-row">
             <label for="field-editor-name">操作者名<span class="req">必須</span></label>
-            <input type="text" id="field-editor-name" name="editorName" placeholder="例：田中">
+            <div>
+              <input type="text" id="field-editor-name" name="editorName" placeholder="例：田中 花子">
+              <p class="field-hint">同じ部署に同じ苗字の方がいても変更履歴で区別できるよう、フルネームで入力してください。</p>
+            </div>
           </div>
         </fieldset>
 
@@ -401,7 +404,7 @@
     <div id="merge-diffs"></div>
     <div class="merge-editor">
       <select id="merge-editor-dept"></select>
-      <input type="text" id="merge-editor-name" placeholder="操作者名（例：田中）">
+      <input type="text" id="merge-editor-name" placeholder="操作者名（フルネーム。例：田中 花子）">
     </div>
     <p class="form-error" id="merge-error" hidden></p>
     <div class="view-actions">
@@ -420,7 +423,7 @@
     </div>
     <div class="merge-editor">
       <select id="cancel-editor-dept"></select>
-      <input type="text" id="cancel-editor-name" placeholder="操作者名（例：田中）">
+      <input type="text" id="cancel-editor-name" placeholder="操作者名（フルネーム。例：田中 花子）">
     </div>
     <p class="form-error" id="cancel-error" hidden></p>
     <div class="view-actions">
