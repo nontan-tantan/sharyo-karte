@@ -213,11 +213,11 @@ tbody tr:hover td{ background:var(--surface-2); }
 .dash-head-icon svg{ width:36px; height:36px; fill:#fff; }
 .dash-head h1{ font-size:28px; margin:0 0 6px; }
 .dash-head .view-note{ margin:0; }
-/* ブランドデザインシートのヘッダーイラスト。左側は見出しと重なるので薄くする */
+/* ブランドデザインシートのヘッダーイラスト。見出しの文字と重ならないよう、左側（見出しの範囲）は消して右側だけ見せる */
 .dash-landscape{
   position:absolute; right:0; bottom:0; width:100%; height:auto; pointer-events:none;
-  -webkit-mask-image:linear-gradient(to right, rgba(0,0,0,.25), #000 55%);
-  mask-image:linear-gradient(to right, rgba(0,0,0,.25), #000 55%);
+  -webkit-mask-image:linear-gradient(to right, transparent 42%, #000 62%);
+  mask-image:linear-gradient(to right, transparent 42%, #000 62%);
 }
 
 .summary-strip{ display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; margin-bottom:32px; }
@@ -225,6 +225,7 @@ tbody tr:hover td{ background:var(--surface-2); }
 .summary-icon{ width:30px; height:30px; fill:var(--accent); }
 .summary-item .num{ font-family:"Zen Kaku Gothic New", sans-serif; font-size:30px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
 .summary-item .label{ grid-column:1 / -1; margin-top:10px; font-size:12px; color:var(--ink-muted); }
+.summary-item .hint{ grid-column:1 / -1; margin-top:3px; font-size:11px; line-height:1.5; color:var(--ink-faint); }
 .summary-item.is-muted .summary-icon{ fill:var(--ink-muted); }
 .summary-item.warn .num{ color:var(--warning); }
 .summary-item.warn .summary-icon{ fill:var(--caution); }
@@ -277,6 +278,10 @@ tbody tr:hover td{ background:var(--surface-2); }
 /* 画面幅への対応（タブレット・スマートフォン） */
 @media (max-width: 1000px){
   .summary-strip{ grid-template-columns:repeat(3, 1fr); }
+  .dash-landscape{
+    -webkit-mask-image:linear-gradient(to right, transparent 58%, #000 78%);
+    mask-image:linear-gradient(to right, transparent 58%, #000 78%);
+  }
 }
 
 @media (max-width: 820px){
