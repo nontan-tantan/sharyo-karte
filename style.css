@@ -129,6 +129,23 @@ main{ padding:40px 32px 64px; }
 }
 .field-row input[readonly]{ background:var(--surface-2); color:var(--ink-muted); }
 
+/* 確認が必要な欄（期限切れは赤、期限間近・要確認はオレンジ）と、保存時の入力エラー */
+.field-row input.is-caution, .field-row select.is-caution{ border:2px solid var(--caution); background:#FFF6E8; }
+.field-row input.is-danger, .field-row select.is-danger,
+.field-row input.is-invalid, .field-row select.is-invalid{ border:2px solid var(--danger); background:var(--danger-soft); }
+.field-row input[type="checkbox"].is-caution{ outline:2px solid var(--caution); outline-offset:2px; }
+.field-notice{ margin:6px 0 0; font-size:12px; font-weight:600; line-height:1.6; }
+.field-notice.is-danger{ color:var(--danger); }
+.field-notice.is-caution{ color:var(--warning); }
+.field-row > .field-notice{ grid-column:2; margin-top:-8px; }
+.field-row:has(> label > input[type="checkbox"]) > .field-notice{ grid-column:1 / -1; margin-top:0; }
+.form-notices{ margin:20px 26px 0; padding:14px 18px; background:#FFF6E8; border:1px solid var(--warning-border); border-left:4px solid var(--caution); border-radius:8px; font-size:13px; color:#6B4A0E; }
+.form-notices[hidden]{ display:none; }
+.form-notices ul{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.form-notice-link{ font:inherit; font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px; cursor:pointer; background:var(--surface); border:1px solid var(--caution); color:var(--warning); }
+.form-notice-link.is-danger{ border-color:var(--danger); color:var(--danger); }
+.form-notice-link:hover{ background:var(--warning-soft); }
+
 .radio-group{ display:flex; gap:18px; }
 .radio-group label{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); cursor:pointer; }
 
@@ -361,6 +378,8 @@ td.col-id{ font-family:"JetBrains Mono", monospace; font-size:12px; font-weight:
 
   #vehicle-form fieldset{ padding:20px; }
   .field-row{ grid-template-columns:1fr; gap:6px; }
+  .field-row > .field-notice{ grid-column:auto; margin-top:0; }
+  .form-notices{ margin:16px 20px 0; }
   #vehicle-form .view-actions{ padding:16px 20px; }
 
   .view-actions{ flex-wrap:wrap; }

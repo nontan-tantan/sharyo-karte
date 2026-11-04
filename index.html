@@ -215,6 +215,11 @@
       </div>
 
       <form id="vehicle-form" novalidate>
+        <!-- 確認が必要な項目（期限切れ・要確認など）があるときだけ表示 -->
+        <div class="form-notices" id="form-notices" hidden>
+          <strong>確認が必要な項目があります</strong>
+          <ul id="form-notice-list"></ul>
+        </div>
         <fieldset>
           <legend><svg class="legend-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>基本情報</legend>
           <div class="field-row">

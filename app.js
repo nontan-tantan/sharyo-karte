@@ -112,6 +112,104 @@ function clearFormError() {
   const errorEl = document.getElementById("form-error");
   errorEl.hidden = true;
   errorEl.textContent = "";
+  document.querySelectorAll("#vehicle-form .is-invalid").forEach((el) => el.classList.remove("is-invalid"));
+}
+
+// 保存時の入力エラー：該当する欄を赤くし、最初の欄に移動する
+function markInvalidFields(ids) {
+  ids.forEach((id) => document.getElementById(id).classList.add("is-invalid"));
+  const first = document.getElementById(ids[0]);
+  if (first) {
+    first.scrollIntoView({ block: "center", behavior: "smooth" });
+    first.focus({ preventScroll: true });
+  }
+}
+
+// 確認が必要な項目：期限切れ・期限間近・要確認になる欄に色を付け、欄の下と
+// フォーム上部の一覧に理由を表示する（入力のたびに見直す）
+function collectFieldNotices() {
+  const value = (id) => document.getElementById(id).value;
+  const status = value("field-status");
+  const retired = isRetired({ status });
+  const hasInsurance = document.getElementById("field-has-insurance").checked;
+  const notices = [];
+
+  const expiry = (id, label, renewText) => {
+    const date = value(id);
+    if (retired || !date) return;
+    const days = daysUntil(date);
+    if (days < 0) {
+      notices.push({ id, level: "danger", short: `${label}（${-days}日超過）`, text: `${label}を${-days}日過ぎています。${renewText}` });
+    } else if (days <= EXPIRY_ALERT_DAYS) {
+      notices.push({ id, level: "caution", short: `${label}（${expiryBadgeText(days)}）`, text: `${label}まで${days === 0 ? "今日まで" : `あと${days}日`}です。${renewText}` });
+    }
+  };
+  expiry("field-shaken", "車検満了日", "車検を受けたら、新しい満了日に更新してください。");
+  if (hasInsurance) {
+    expiry("field-insurance-end", "保険の契約終了日", "保険を更新したら、新しい契約期間を入力してください。");
+  }
+
+  if (retired && hasInsurance) {
+    notices.push({
+      id: "field-has-insurance",
+      level: "caution",
+      short: "保険契約（解約の確認）",
+      text: `稼働状態が「${status}」ですが、保険契約が「あり」のままです。解約したらチェックを外してください。`,
+    });
+  }
+
+  const isEditing = document.getElementById("field-id").readOnly;
+  const duplicates = findDuplicateVehicles(
+    { plate: value("field-plate"), status },
+    getVehicles(),
+    isEditing ? value("field-id") : null
+  );
+  if (duplicates.length) {
+    const other = duplicates[0];
+    notices.push({
+      id: "field-plate",
+      level: "caution",
+      short: "ナンバー（重複の疑い）",
+      text: `同じナンバーの車両が、${other.dept}の「${other.id}」としても登録されています。`,
+    });
+  }
+  return notices;
+}
+
+function noticeContainer(input) {
+  return input.closest(".field-row > div") || input.closest(".field-row");
+}
+
+function updateFieldNotices() {
+  document.querySelectorAll("#vehicle-form .field-notice").forEach((el) => el.remove());
+  document.querySelectorAll("#vehicle-form .is-danger, #vehicle-form .is-caution").forEach((el) => {
+    el.classList.remove("is-danger", "is-caution");
+  });
+
+  const notices = collectFieldNotices();
+  const list = document.getElementById("form-notice-list");
+  list.innerHTML = "";
+  notices.forEach(({ id, level, short, text }) => {
+    const input = document.getElementById(id);
+    input.classList.add(`is-${level}`);
+    const p = document.createElement("p");
+    p.className = `field-notice is-${level}`;
+    p.textContent = text;
+    noticeContainer(input).appendChild(p);
+
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `form-notice-link is-${level}`;
+    button.textContent = short;
+    button.addEventListener("click", () => {
+      input.scrollIntoView({ block: "center", behavior: "smooth" });
+      input.focus({ preventScroll: true });
+    });
+    li.appendChild(button);
+    list.appendChild(li);
+  });
+  document.getElementById("form-notices").hidden = notices.length === 0;
 }
 
 function showFormError(message) {
@@ -212,6 +310,7 @@ function enterFormMode(mode) {
   updateOwnershipFields();
   updateInsuranceFields();
   updateDisposalFields();
+  updateFieldNotices();
 
   formDraftKey = mode === "edit" && currentVehicleId ? `edit:${currentVehicleId}` : "new";
   formInitialState = readFormState();
@@ -277,6 +376,7 @@ function restoreDraft(draft) {
   updateOwnershipFields();
   updateInsuranceFields();
   updateDisposalFields();
+  updateFieldNotices();
 }
 
 // フォームを開いたとき、下書きがあれば続きから入力するか確認する
@@ -342,6 +442,10 @@ function showToast(message) {
 const vehicleForm = document.getElementById("vehicle-form");
 vehicleForm.addEventListener("input", autosaveDraft);
 vehicleForm.addEventListener("change", autosaveDraft);
+vehicleForm.addEventListener("input", updateFieldNotices);
+vehicleForm.addEventListener("change", updateFieldNotices);
+// 直し始めたら、その欄の赤枠は消す
+vehicleForm.addEventListener("input", (event) => event.target.classList.remove("is-invalid"));
 window.addEventListener("beforeunload", autosaveDraft);
 
 document.getElementById("form-save-draft").addEventListener("click", () => {
@@ -376,10 +480,12 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
 
   if (!id) {
     showFormError("社内車両IDを入力してください。");
+    markInvalidFields(["field-id"]);
     return;
   }
   if (!editorName) {
     showFormError("操作者名を入力してください。");
+    markInvalidFields(["field-editor-name"]);
     return;
   }
   if (!confirmEditorName(editorName)) {
@@ -391,6 +497,7 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
 
   if (!isEditing && isVehicleIdTaken(id)) {
     showFormError(`車両ID「${id}」はすでに使われています。別のIDを入力してください。`);
+    markInvalidFields(["field-id"]);
     return;
   }
 
@@ -426,21 +533,23 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
 
   // 必須項目（期限アラートに使う日付も含む）と、日付の前後をチェックする
   const missing = [
-    [!vehicle.model, "車種"],
-    [!vehicle.plate, "ナンバー"],
-    [!isRetired(vehicle) && !vehicle.shakenExpiresAt, "車検満了日"],
-    [hasInsurance && !vehicle.insurance.period.end, "保険の契約期間（終了）"],
-  ].filter(([isMissing]) => isMissing).map(([, label]) => label);
+    [!vehicle.model, "車種", "field-model"],
+    [!vehicle.plate, "ナンバー", "field-plate"],
+    [!isRetired(vehicle) && !vehicle.shakenExpiresAt, "車検満了日", "field-shaken"],
+    [hasInsurance && !vehicle.insurance.period.end, "保険の契約期間（終了）", "field-insurance-end"],
+  ].filter(([isMissing]) => isMissing);
   if (missing.length) {
-    showFormError(`次の項目を入力してください：${missing.join("、")}`);
+    showFormError(`次の項目を入力してください：${missing.map(([, label]) => label).join("、")}`);
+    markInvalidFields(missing.map(([, , fieldId]) => fieldId));
     return;
   }
   const reversed = [
-    [vehicle.lease, "リース終了日がリース開始日より前になっています。"],
-    [vehicle.insurance.period, "保険の契約期間（終了）が契約期間（開始）より前になっています。"],
+    [vehicle.lease, "リース終了日がリース開始日より前になっています。", "field-lease-end"],
+    [vehicle.insurance.period, "保険の契約期間（終了）が契約期間（開始）より前になっています。", "field-insurance-end"],
   ].find(([period]) => period.start && period.end && period.end < period.start);
   if (reversed) {
     showFormError(reversed[1]);
+    markInvalidFields([reversed[2]]);
     return;
   }
 
