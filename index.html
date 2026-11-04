@@ -9,15 +9,36 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- アイコン（<use href="#i-..."> で呼び出す） -->
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3.5l8.5 7.2-1.3 1.5-1.2-1V19a1 1 0 0 1-1 1h-3.5v-5h-3v5H7a1 1 0 0 1-1-1v-7.8l-1.2 1-1.3-1.5z"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11h.5a1.5 1.5 0 0 1 1.5 1.5V17a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4.5A1.5 1.5 0 0 1 4.5 11zM7.2 11h9.6l-1.1-3a.8.8 0 0 0-.7-.5H9a.8.8 0 0 0-.7.5zM6.8 12.6a1.3 1.3 0 1 0 0 2.6a1.3 1.3 0 1 0 0-2.6zM17.2 12.6a1.3 1.3 0 1 0 0 2.6a1.3 1.3 0 1 0 0-2.6z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7zM12 8.6a3.4 3.4 0 1 0 0 6.8a3.4 3.4 0 1 0 0-6.8z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20zM9 7.5h2v9H9zM13 7.5h2v9h-2z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2l8 3v6.5c0 5-3.4 8.8-8 10.5-4.6-1.7-8-5.5-8-10.5V5zM11 7h2v6h-2zM11 15h2v2h-2z"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M21.7 6.3l-3.4 3.4-2.6-.6-.6-2.6 3.4-3.4a5.5 5.5 0 0 0-7.1 6.8L3.3 17.9a2 2 0 0 0 2.8 2.8l8-8.1a5.5 5.5 0 0 0 7.6-6.3z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM10.3 15.8l7-7-1.5-1.5-5.5 5.5-2.6-2.6-1.5 1.5z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2.5l10 18H2zM11 9h2v6h-2zM11 16.5h2v2h-2z"/></symbol>
+  </svg>
 
   <header class="app-header">
     <button type="button" class="brand" data-view="dashboard" title="ダッシュボードに戻る">
-      <span class="brand-mark">車両カルテ</span>
-      <span class="brand-sub">SHARYO KARTE</span>
+      <svg class="brand-logo" viewBox="0 0 64 44" aria-hidden="true">
+        <path class="logo-leaf" d="M3 37c11-6.5 31-8.5 47-4.5-8 6.5-26.5 9.5-40.5 7.3C6 39.2 4 38.4 3 37z"/>
+        <path class="logo-vein" d="M10 37.5c11-2.6 23-3.6 34-3"/>
+        <path class="logo-body" d="M8 26c0-3 2-5 5-5.5l6-8C21 10 23.5 9 26 9h12c3 0 5.5 1.5 7 4l5 7.5c4 .5 7 3 7 6.5v3a2 2 0 0 1-2 2h-3a6 6 0 0 0-12 0H24a6 6 0 0 0-12 0h-2a2 2 0 0 1-2-2z"/>
+        <path class="logo-window" d="M22 20l4.5-6.2c.6-.8 1.4-1.3 2.4-1.3H34v7.5zM37 12.5h3c1.2 0 2.2.6 2.8 1.6L46 20h-9z"/>
+        <circle class="logo-body" cx="18" cy="32" r="4.3"/><circle class="logo-hub" cx="18" cy="32" r="1.7"/>
+        <circle class="logo-body" cx="45" cy="32" r="4.3"/><circle class="logo-hub" cx="45" cy="32" r="1.7"/>
+      </svg>
+      <span class="brand-text">
+        <span class="brand-mark">車両カルテ</span>
+        <span class="brand-sub">SHARYO KARTE</span>
+      </span>
     </button>
     <nav class="main-nav">
-      <button type="button" class="nav-link" data-view="dashboard">ダッシュボード</button>
-      <button type="button" class="nav-link" data-view="list">車両一覧</button>
+      <button type="button" class="nav-link" data-view="dashboard"><svg class="nav-icon" aria-hidden="true"><use href="#i-home"/></svg>ダッシュボード</button>
+      <button type="button" class="nav-link" data-view="list"><svg class="nav-icon" aria-hidden="true"><use href="#i-car"/></svg>車両一覧</button>
     </nav>
   </header>
 
@@ -26,9 +47,22 @@
     <!-- ダッシュボード -->
     <section id="view-dashboard" class="view">
       <div class="dash-head">
-        <div class="eyebrow">DASHBOARD</div>
-        <h1>ダッシュボード</h1>
-        <p class="view-note">保有車両の状況と、対応が必要な事項を一目で確認できます。</p>
+        <span class="dash-head-icon"><svg aria-hidden="true"><use href="#i-car"/></svg></span>
+        <div>
+          <h1>ダッシュボード</h1>
+          <p class="view-note">保有車両の状況と、対応が必要な事項を一目で確認できます。</p>
+        </div>
+        <svg class="dash-landscape" viewBox="0 0 640 150" preserveAspectRatio="xMaxYMax meet" aria-hidden="true">
+          <path class="land-far" d="M0 110C80 70 150 60 230 82s150-50 240-40 130 40 170 30v78H0z"/>
+          <path class="land-near" d="M0 128c90-26 200-30 320-18s220 6 320-14v54H0z"/>
+          <path class="land-road" d="M0 138c160-10 420-12 640-6v18H0z"/>
+          <path class="land-line" d="M40 143h40M130 142h40M220 141.5h40M310 141h40M400 141h40M490 141.5h40M580 142h40"/>
+          <g class="land-tree"><rect x="186" y="88" width="4" height="22"/><path d="M188 52l14 22h-6l10 16h-36l10-16h-6z"/></g>
+          <g class="land-tree is-small"><rect x="232" y="98" width="3" height="14"/><path d="M233.5 72l10 16h-4l7 11h-26l7-11h-4z"/></g>
+          <g class="land-tree"><rect x="560" y="76" width="4" height="34"/><circle cx="562" cy="62" r="18"/><circle cx="550" cy="76" r="12"/><circle cx="574" cy="76" r="12"/></g>
+          <g class="land-tree is-small"><rect x="606" y="88" width="3" height="24"/><circle cx="607.5" cy="78" r="12"/></g>
+          <use class="land-car" href="#i-car" x="388" y="84" width="64" height="64"/>
+        </svg>
       </div>
 
       <!-- 入力途中の下書き（あるときだけ表示） -->
@@ -38,27 +72,27 @@
       </div>
 
       <div class="summary-strip">
-        <div class="summary-item"><div class="num" id="sum-owned">0</div><div class="label">保有台数</div></div>
-        <div class="summary-item"><div class="num" id="sum-active">0</div><div class="label">稼働中</div></div>
-        <div class="summary-item"><div class="num" id="sum-paused">0</div><div class="label">休止中</div></div>
-        <div class="summary-item warn"><div class="num" id="sum-insurance">0</div><div class="label">保険期限が近い／超過</div></div>
-        <div class="summary-item warn"><div class="num" id="sum-shaken">0</div><div class="label">車検期限が近い／超過</div></div>
-        <div class="summary-item warn"><div class="num" id="sum-issues">0</div><div class="label">要確認あり</div></div>
+        <div class="summary-item"><svg class="summary-icon" aria-hidden="true"><use href="#i-car"/></svg><div class="num" id="sum-owned">0</div><div class="label">保有台数</div></div>
+        <div class="summary-item"><svg class="summary-icon" aria-hidden="true"><use href="#i-gear"/></svg><div class="num" id="sum-active">0</div><div class="label">稼働中</div></div>
+        <div class="summary-item is-muted"><svg class="summary-icon" aria-hidden="true"><use href="#i-pause"/></svg><div class="num" id="sum-paused">0</div><div class="label">休止中</div></div>
+        <div class="summary-item warn"><svg class="summary-icon" aria-hidden="true"><use href="#i-shield"/></svg><div class="num" id="sum-insurance">0</div><div class="label">保険期限が近い／超過</div></div>
+        <div class="summary-item warn"><svg class="summary-icon" aria-hidden="true"><use href="#i-wrench"/></svg><div class="num" id="sum-shaken">0</div><div class="label">車検期限が近い／超過</div></div>
+        <div class="summary-item warn"><svg class="summary-icon" aria-hidden="true"><use id="sum-issues-icon" href="#i-alert"/></svg><div class="num" id="sum-issues">0</div><div class="label">要確認あり</div></div>
       </div>
 
       <div class="panels">
         <div class="panel">
-          <div class="panel-head"><h2>保険期限が近い／超過している車両</h2><span class="count" id="insurance-count"></span></div>
+          <div class="panel-head"><h2><svg class="panel-icon" aria-hidden="true"><use href="#i-shield"/></svg>保険期限が近い／超過している車両</h2><span class="count" id="insurance-count"></span></div>
           <ul class="item-list" id="insurance-list"></ul>
         </div>
         <div class="panel">
-          <div class="panel-head"><h2>車検期限が近い／超過している車両</h2><span class="count" id="shaken-count"></span></div>
+          <div class="panel-head"><h2><svg class="panel-icon" aria-hidden="true"><use href="#i-wrench"/></svg>車検期限が近い／超過している車両</h2><span class="count" id="shaken-count"></span></div>
           <ul class="item-list" id="shaken-list"></ul>
         </div>
       </div>
 
       <div class="panel panel-wide">
-        <div class="panel-head"><h2>整合性チェックで要確認となっている車両</h2><span class="count" id="issues-count"></span></div>
+        <div class="panel-head"><h2><svg class="panel-icon is-warn" aria-hidden="true"><use href="#i-alert"/></svg>整合性チェックで要確認となっている車両</h2><span class="count" id="issues-count"></span></div>
         <ul class="item-list" id="issues-list"></ul>
       </div>
 

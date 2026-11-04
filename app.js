@@ -1018,6 +1018,12 @@ function renderDashboard() {
   document.getElementById("sum-shaken").textContent = shakenItems.length;
   document.getElementById("sum-issues").textContent = flagged.length;
 
+  // 期限・要確認が0件のときは注意の色を使わず、要確認のアイコンはチェックにする
+  [["sum-insurance", insuranceItems], ["sum-shaken", shakenItems], ["sum-issues", flagged]].forEach(([id, items]) => {
+    document.getElementById(id).closest(".summary-item").classList.toggle("is-zero", items.length === 0);
+  });
+  document.getElementById("sum-issues-icon").setAttribute("href", flagged.length ? "#i-alert" : "#i-check");
+
   renderExpiryList("insurance-list", "insurance-count", insuranceItems, "保険終了日");
   renderExpiryList("shaken-list", "shaken-count", shakenItems, "車検満了日");
   renderIssueList(flagged);
