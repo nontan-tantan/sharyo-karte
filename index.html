@@ -99,6 +99,7 @@
           <option>休止中</option>
           <option>売却済</option>
           <option>廃車</option>
+          <option value="登録取消">登録取消（通常は非表示）</option>
         </select>
         <select id="filter-ownership">
           <option value="">所有／リース：すべて</option>
@@ -138,6 +139,15 @@
           <span class="icon">!</span>
           <div class="text" id="detail-warning-text"></div>
         </div>
+        <!-- 登録を取り消した車両の表示 -->
+        <div class="warn-banner is-neutral" id="detail-cancelled" hidden>
+          <span class="icon">×</span>
+          <div class="text">
+            <strong>この登録は取り消されています</strong>
+            <div id="detail-cancelled-detail"></div>
+            <button type="button" class="btn-link warn-action" id="detail-restore">取り消しを元に戻す</button>
+          </div>
+        </div>
       </div>
 
       <div class="tabs">
@@ -163,8 +173,9 @@
       </div>
 
       <div class="view-actions">
-        <button type="button" class="btn btn-primary" data-view="form" data-mode="edit">編集する</button>
+        <button type="button" class="btn btn-primary" data-view="form" data-mode="edit" id="detail-edit">編集する</button>
         <button type="button" class="btn btn-secondary" data-view="list">一覧に戻る</button>
+        <button type="button" class="btn-link detail-cancel-link" id="detail-cancel">この登録を取り消す</button>
       </div>
     </section>
 
@@ -368,6 +379,24 @@
     </div>
   </dialog>
 
+  <!-- 登録の取り消し／元に戻す -->
+  <dialog id="cancel-dialog" class="issue-alert">
+    <h2 id="cancel-title">登録の取り消し</h2>
+    <p class="view-note" id="cancel-note"></p>
+    <div class="cancel-reason">
+      <label for="cancel-reason" id="cancel-reason-label">取り消す理由</label>
+      <input type="text" id="cancel-reason">
+    </div>
+    <div class="merge-editor">
+      <select id="cancel-editor-dept"></select>
+      <input type="text" id="cancel-editor-name" placeholder="操作者名（例：田中）">
+    </div>
+    <p class="form-error" id="cancel-error" hidden></p>
+    <div class="view-actions">
+      <button type="button" class="btn btn-secondary" id="cancel-close">キャンセル</button>
+      <button type="button" class="btn btn-primary" id="cancel-submit">取り消す</button>
+    </div>
+  </dialog>
   <script src="data.js"></script>
   <script src="sample-data.js"></script>
   <script src="app.js"></script>

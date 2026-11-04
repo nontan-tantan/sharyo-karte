@@ -77,6 +77,21 @@ function isRetired(vehicle) {
   return vehicle.status === "売却済" || vehicle.status === "廃車";
 }
 
+// 登録の取り消し：誤って登録した車両は削除せず、取り消した記録を残して普段の表示から外す
+function isCancelled(vehicle) {
+  return !!vehicle.cancellation;
+}
+
+// cancellation に { date, time, reason, editor } を渡すと取り消し、null を渡すと元に戻す
+function setVehicleCancellation(id, cancellation, historyEntry) {
+  const vehicles = getVehicles();
+  const vehicle = vehicles.find((v) => v.id === id);
+  if (!vehicle) return;
+  vehicle.cancellation = cancellation;
+  vehicle.history = [historyEntry, ...(vehicle.history || [])];
+  saveVehicles(vehicles);
+}
+
 // 入力の表記ゆれをそろえる（保存時に使う）
 // 英数字・記号・スペースは半角に、連続するスペースは1つにまとめ、前後のスペースは取る
 const DASH_PATTERN = /[‐‑‒–—―−ー]/g;
@@ -105,16 +120,19 @@ function normalizeForSearch(text) {
   return normalizeText(text).replace(/\s/g, "").replace(DASH_PATTERN, "-").toLowerCase();
 }
 
-// 同じナンバーで登録されている別の車両を返す（売却済・廃車は対象外）
+// 同じナンバーで登録されている別の車両を返す（売却済・廃車・登録取消は対象外）
 function findDuplicateVehicles(vehicle, vehicles = getVehicles(), excludeId = vehicle.id) {
   const key = normalizePlate(vehicle.plate);
-  if (!key || isRetired(vehicle)) return [];
-  return vehicles.filter((v) => v.id !== excludeId && !isRetired(v) && normalizePlate(v.plate) === key);
+  if (!key || isRetired(vehicle) || isCancelled(vehicle)) return [];
+  return vehicles.filter(
+    (v) => v.id !== excludeId && !isRetired(v) && !isCancelled(v) && normalizePlate(v.plate) === key
+  );
 }
 
 // 整合性チェック：要確認の内容を配列で返す（問題なければ空配列）
 function getVehicleIssues(vehicle, vehicles = getVehicles()) {
   const issues = [];
+  if (isCancelled(vehicle)) return issues;
   if (isRetired(vehicle) && vehicle.insurance && vehicle.insurance.active) {
     issues.push({
       type: "insurance",

@@ -146,7 +146,9 @@ tbody tr:hover td{ background:var(--surface-2); }
 .status-active{ background:var(--accent-soft); color:var(--accent-strong); }
 .status-paused{ background:var(--surface-2); color:var(--ink-muted); border:1px solid var(--border-strong); }
 .status-sold{ background:var(--warning-soft); color:var(--warning); }
+.status-cancelled{ background:var(--surface); color:var(--ink-faint); border:1px dashed var(--border-strong); }
 .flag-cell{ text-align:center; }
+.col-plate{ white-space:nowrap; }
 
 /* 車両詳細：ヘッダー部 */
 .card-head{ background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); padding:24px 28px; margin-bottom:20px; }
@@ -159,6 +161,10 @@ tbody tr:hover td{ background:var(--surface-2); }
 /* 車両詳細：要確認警告 */
 .warn-banner{ display:flex; gap:14px; align-items:flex-start; background:var(--warning-soft); border:1px solid var(--warning-border); border-radius:10px; padding:16px 18px; margin-top:18px; }
 .warn-banner[hidden]{ display:none; }
+.warn-banner.is-neutral{ background:var(--surface-2); border-color:var(--border-strong); }
+.warn-banner.is-neutral .icon{ background:var(--ink-muted); }
+.warn-banner.is-neutral .text{ color:var(--ink); }
+.warn-banner.is-neutral .warn-action{ margin-left:0; margin-top:6px; color:var(--accent); }
 .warn-banner .icon{ flex-shrink:0; width:26px; height:26px; border-radius:8px; background:var(--warning); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
 .warn-banner .text{ font-size:13px; line-height:1.7; color:#6B4A0E; }
 .warn-banner .text strong{ display:block; margin-bottom:2px; }
@@ -272,7 +278,21 @@ tbody tr:hover td{ background:var(--surface-2); }
 
   .page-head{ flex-wrap:wrap; gap:12px; }
   .filter-bar select, .filter-bar input[type="text"]{ flex:1 1 100%; min-width:0; }
-  table{ min-width:720px; }
+  /* 車両一覧：スマホ幅では1台を1枚のカードにして、要確認・稼働状態を横スクロールなしで見せる */
+  table, tbody, tr, td{ display:block; }
+  thead{ display:none; }
+  tbody tr{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+  tbody tr:last-child{ border-bottom:none; }
+  tbody td, tbody tr:last-child td{ padding:0; border:none; }
+  tbody tr:hover td{ background:none; }
+  tbody tr:hover{ background:var(--surface-2); }
+  .col-id{ order:1; flex:1 1 auto; font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink-faint); }
+  .col-flag{ order:2; }
+  .col-flag:empty{ display:none; }
+  .col-status{ order:3; }
+  .col-model{ order:4; flex:1 1 100%; font-size:14px; font-weight:700; }
+  .col-plate{ order:5; flex:1 1 100%; }
+  .col-dept, .col-usage{ order:6; font-size:12px; color:var(--ink-muted); }
 
   .card-head{ padding:20px; }
   .card-head-top{ flex-direction:column; align-items:flex-start; gap:10px; }
@@ -288,6 +308,7 @@ tbody tr:hover td{ background:var(--surface-2); }
 
   .view-actions{ flex-wrap:wrap; }
   .view-actions .btn{ flex:1 1 auto; justify-content:center; }
+  .detail-cancel-link{ flex:1 1 100%; margin:4px 0 0; text-align:right; }
 }
 
 /* 動作確認用ツール */
@@ -326,6 +347,14 @@ tbody tr:hover td{ background:var(--surface-2); }
 .merge-editor select, .merge-editor input{ font:inherit; font-size:13px; padding:9px 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); color:var(--ink); }
 .merge-editor input{ flex:1; min-width:160px; }
 .merge-dialog .form-error{ margin:0 0 16px; }
+
+/* 登録の取り消し */
+.detail-cancel-link{ margin-left:auto; align-self:center; color:var(--ink-muted); }
+.detail-cancel-link[hidden], .btn[hidden]{ display:none; }
+.cancel-reason{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; font-size:13px; font-weight:600; }
+.cancel-reason input{ font:inherit; font-size:13px; font-weight:400; padding:9px 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); color:var(--ink); }
+#cancel-dialog .form-error{ margin:0 0 16px; }
+#cancel-dialog .view-actions{ justify-content:flex-end; }
 
 /* 下書き：ダッシュボードのお知らせ */
 .draft-notice{ background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:12px; box-shadow:var(--shadow); padding:16px 20px; margin-bottom:24px; }

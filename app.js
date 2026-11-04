@@ -141,9 +141,38 @@ function fillForm(vehicle) {
   document.getElementById("field-insurance-premium").value = (vehicle.insurance && vehicle.insurance.premium) || "";
 }
 
+// 操作者：最後に入力した部署・名前を、ブラウザのタブを閉じるまで引き継ぐ
+// （共用パソコンで別の人の名前が残り続けないよう、localStorage ではなく sessionStorage に保存する）
+const LAST_EDITOR_KEY = "lastEditor";
+
+function getLastEditor() {
+  try {
+    const raw = sessionStorage.getItem(LAST_EDITOR_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setLastEditor(dept, name) {
+  try {
+    sessionStorage.setItem(LAST_EDITOR_KEY, JSON.stringify({ dept, name }));
+  } catch (e) {
+    // 保存できない環境では引き継がない
+  }
+}
+
+function fillLastEditor(deptId, nameId) {
+  const last = getLastEditor();
+  if (!last) return;
+  document.getElementById(deptId).value = last.dept;
+  document.getElementById(nameId).value = last.name;
+}
+
 function enterFormMode(mode) {
   document.getElementById("vehicle-form").reset();
   clearFormError();
+  fillLastEditor("field-editor-dept", "field-editor-name");
 
   const idField = document.getElementById("field-id");
 
@@ -369,6 +398,26 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
     history: [],
   };
 
+  // 必須項目（期限アラートに使う日付も含む）と、日付の前後をチェックする
+  const missing = [
+    [!vehicle.model, "車種"],
+    [!vehicle.plate, "ナンバー"],
+    [!isRetired(vehicle) && !vehicle.shakenExpiresAt, "車検満了日"],
+    [hasInsurance && !vehicle.insurance.period.end, "保険の契約期間（終了）"],
+  ].filter(([isMissing]) => isMissing).map(([, label]) => label);
+  if (missing.length) {
+    showFormError(`次の項目を入力してください：${missing.join("、")}`);
+    return;
+  }
+  const reversed = [
+    [vehicle.lease, "リース終了日がリース開始日より前になっています。"],
+    [vehicle.insurance.period, "保険の契約期間（終了）が契約期間（開始）より前になっています。"],
+  ].find(([period]) => period.start && period.end && period.end < period.start);
+  if (reversed) {
+    showFormError(reversed[1]);
+    return;
+  }
+
   const isSold = vehicle.status === "売却済";
   vehicle.disposal = isRetired(vehicle)
     ? {
@@ -424,6 +473,7 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
     saveVehicle(vehicle);
   }
   recordIssuedVehicleId(vehicle.id);
+  setLastEditor(editorDept, editorName);
   deleteDraft(formDraftKey);
   formDraftKey = null;
   formInitialState = null;
@@ -433,6 +483,7 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
 });
 
 function statusPillClass(status) {
+  if (status === "登録取消") return "status-cancelled";
   if (status === "売却済" || status === "廃車") return "status-sold";
   if (status === "休止中") return "status-paused";
   return "status-active";
@@ -516,9 +567,21 @@ function renderVehicleDetail() {
   document.getElementById("detail-meta").textContent =
     [vehicle.plate, vehicle.dept].filter(Boolean).join("　／　");
 
+  const cancelled = isCancelled(vehicle);
+  const statusText = cancelled ? "登録取消" : vehicle.status || "";
   const statusPill = document.getElementById("detail-status");
-  statusPill.className = `status-pill ${statusPillClass(vehicle.status)}`;
-  statusPill.textContent = vehicle.status || "";
+  statusPill.className = `status-pill ${statusPillClass(statusText)}`;
+  statusPill.textContent = statusText;
+
+  // 取り消した登録は編集できないようにし、取り消しの記録と「元に戻す」を表示する
+  document.getElementById("detail-cancelled").hidden = !cancelled;
+  document.getElementById("detail-edit").hidden = cancelled;
+  document.getElementById("detail-cancel").hidden = cancelled;
+  if (cancelled) {
+    const c = vehicle.cancellation;
+    document.getElementById("detail-cancelled-detail").textContent =
+      `${c.date} ${c.time}　${c.editor}　理由：${c.reason}`;
+  }
 
   const issues = getVehicleIssues(vehicle);
   const warning = document.getElementById("detail-warning");
@@ -646,8 +709,9 @@ function populateUsageFilter() {
   if (usages.includes(current)) select.value = current;
 }
 
-function createCell(text) {
+function createCell(text, className) {
   const td = document.createElement("td");
+  td.className = className;
   td.textContent = text || "";
   return td;
 }
@@ -662,10 +726,12 @@ function renderVehicleList() {
   const keyword = normalizeForSearch(document.getElementById("filter-keyword").value);
 
   const allVehicles = getVehicles();
-  const vehicles = allVehicles.filter((v) => {
+  const showCancelled = status === "登録取消";
+  const listed = allVehicles.filter((v) => isCancelled(v) === showCancelled);
+  const vehicles = listed.filter((v) => {
     if (dept && v.dept !== dept) return false;
     if (usage && v.usage !== usage) return false;
-    if (status && v.status !== status) return false;
+    if (status && !showCancelled && v.status !== status) return false;
     if (ownership && v.ownership !== ownership) return false;
     if (keyword) {
       const haystack = normalizeForSearch(`${v.id} ${(v.formerIds || []).join(" ")} ${v.model} ${v.plate}`);
@@ -679,21 +745,23 @@ function renderVehicleList() {
 
   vehicles.forEach((v) => {
     const tr = document.createElement("tr");
-    tr.appendChild(createCell(v.id));
-    tr.appendChild(createCell(v.model));
-    tr.appendChild(createCell(v.plate));
-    tr.appendChild(createCell(v.dept));
-    tr.appendChild(createCell(v.usage));
+    tr.appendChild(createCell(v.id, "col-id"));
+    tr.appendChild(createCell(v.model, "col-model"));
+    tr.appendChild(createCell(v.plate, "col-plate"));
+    tr.appendChild(createCell(v.dept, "col-dept"));
+    tr.appendChild(createCell(v.usage, "col-usage"));
 
+    const statusText = isCancelled(v) ? "登録取消" : v.status || "";
     const statusTd = document.createElement("td");
+    statusTd.className = "col-status";
     const pill = document.createElement("span");
-    pill.className = `status-pill ${statusPillClass(v.status)}`;
-    pill.textContent = v.status || "";
+    pill.className = `status-pill ${statusPillClass(statusText)}`;
+    pill.textContent = statusText;
     statusTd.appendChild(pill);
     tr.appendChild(statusTd);
 
     const flagTd = document.createElement("td");
-    flagTd.className = "flag-cell";
+    flagTd.className = "flag-cell col-flag";
     const issues = getVehicleIssues(v, allVehicles);
     if (issues.length) {
       const flag = document.createElement("span");
@@ -708,8 +776,9 @@ function renderVehicleList() {
     tbody.appendChild(tr);
   });
 
-  document.getElementById("list-result-count").textContent =
-    `全${allVehicles.length}件中　${vehicles.length}件を表示`;
+  document.getElementById("list-result-count").textContent = showCancelled
+    ? `登録を取り消した車両　${vehicles.length}件を表示`
+    : `全${listed.length}件中　${vehicles.length}件を表示`;
 }
 
 ["filter-dept", "filter-usage", "filter-status", "filter-ownership"].forEach((id) => {
@@ -760,10 +829,10 @@ function expiryBadgeText(days) {
   return `あと${days}日`;
 }
 
-// 期限日が30日以内か過ぎている車両を、期限の近い順に返す（売却済・廃車は除く）
+// 期限日が30日以内か過ぎている車両を、期限の近い順に返す（売却済・廃車・登録取消は除く）
 function getExpiringVehicles(vehicles, getDate) {
   return vehicles
-    .filter((v) => !isRetired(v))
+    .filter((v) => !isRetired(v) && !isCancelled(v))
     .map((v) => ({ vehicle: v, date: getDate(v) }))
     .filter((item) => item.date)
     .map((item) => ({ ...item, days: daysUntil(item.date) }))
@@ -932,7 +1001,7 @@ function renderDrafts(vehicles) {
 function renderDashboard() {
   const vehicles = getVehicles();
   renderDrafts(vehicles);
-  const owned = vehicles.filter((v) => !isRetired(v));
+  const owned = vehicles.filter((v) => !isRetired(v) && !isCancelled(v));
 
   const insuranceItems = getExpiringVehicles(vehicles, (v) =>
     v.insurance && v.insurance.active && v.insurance.period ? v.insurance.period.end : ""
@@ -1104,6 +1173,7 @@ function openMergeDialog(idA, idB) {
   const deptSelect = document.getElementById("merge-editor-dept");
   deptSelect.innerHTML = document.getElementById("field-editor-dept").innerHTML;
   document.getElementById("merge-editor-name").value = "";
+  fillLastEditor("merge-editor-dept", "merge-editor-name");
   document.getElementById("merge-error").hidden = true;
 
   document.getElementById("merge-dialog").showModal();
@@ -1121,7 +1191,9 @@ document.getElementById("merge-submit").addEventListener("click", () => {
     errorEl.hidden = false;
     return;
   }
-  const editor = `${editorName}（${document.getElementById("merge-editor-dept").value}）`;
+  const editorDept = document.getElementById("merge-editor-dept").value;
+  const editor = `${editorName}（${editorDept}）`;
+  setLastEditor(editorDept, editorName);
   const keepId = document.querySelector('input[name="merge-keep"]:checked').value;
   const remove = mergePair.find((v) => v.id !== keepId);
 
@@ -1134,6 +1206,69 @@ document.getElementById("merge-submit").addEventListener("click", () => {
 
   document.getElementById("merge-dialog").close();
   openVehicleDetail(keepId);
+});
+
+// 登録の取り消し／取り消しを元に戻す（理由と操作者を変更履歴に残す）
+
+function openCancelDialog() {
+  const vehicle = getVehicles().find((v) => v.id === currentVehicleId);
+  if (!vehicle) return;
+  const restoring = isCancelled(vehicle);
+  document.getElementById("cancel-title").textContent = restoring ? "取り消しを元に戻す" : "登録の取り消し";
+  document.getElementById("cancel-note").textContent = restoring
+    ? `「${vehicle.id}」の登録を元に戻し、一覧やダッシュボードに再び表示します。`
+    : `「${vehicle.id}」（${vehicle.model || "車種未入力"}）の登録を取り消します。間違えて登録した車両に使ってください。取り消した車両は一覧やダッシュボードに表示されなくなりますが、記録は残り、あとから元に戻せます。売却・廃車した車両は、取り消さずに稼働状態を変更してください。`;
+  document.getElementById("cancel-reason-label").textContent = restoring ? "元に戻す理由（任意）" : "取り消す理由";
+  document.getElementById("cancel-reason").placeholder = restoring ? "例：誤って取り消したため" : "例：二重に登録したため";
+  document.getElementById("cancel-reason").value = "";
+  const submit = document.getElementById("cancel-submit");
+  submit.textContent = restoring ? "元に戻す" : "取り消す";
+  submit.dataset.restoring = restoring ? "1" : "";
+
+  const deptSelect = document.getElementById("cancel-editor-dept");
+  deptSelect.innerHTML = document.getElementById("field-editor-dept").innerHTML;
+  document.getElementById("cancel-editor-name").value = "";
+  fillLastEditor("cancel-editor-dept", "cancel-editor-name");
+  document.getElementById("cancel-error").hidden = true;
+  document.getElementById("cancel-dialog").showModal();
+}
+
+document.getElementById("detail-cancel").addEventListener("click", openCancelDialog);
+document.getElementById("detail-restore").addEventListener("click", openCancelDialog);
+document.getElementById("cancel-close").addEventListener("click", () => {
+  document.getElementById("cancel-dialog").close();
+});
+
+document.getElementById("cancel-submit").addEventListener("click", (event) => {
+  const restoring = !!event.currentTarget.dataset.restoring;
+  const errorEl = document.getElementById("cancel-error");
+  const reason = normalizeText(document.getElementById("cancel-reason").value);
+  const editorName = normalizeText(document.getElementById("cancel-editor-name").value);
+  const editorDept = document.getElementById("cancel-editor-dept").value;
+  const missing = [[!restoring && !reason, "取り消す理由"], [!editorName, "操作者名"]]
+    .filter(([isMissing]) => isMissing).map(([, label]) => label);
+  if (missing.length) {
+    errorEl.textContent = `次の項目を入力してください：${missing.join("、")}`;
+    errorEl.hidden = false;
+    return;
+  }
+  const editor = `${editorName}（${editorDept}）`;
+  setLastEditor(editorDept, editorName);
+  const entry = { date: todayString(), time: nowTimeString(), editor };
+
+  if (restoring) {
+    setVehicleCancellation(currentVehicleId, null, {
+      ...entry,
+      note: reason ? `登録の取り消しを元に戻す（理由：${reason}）` : "登録の取り消しを元に戻す",
+    });
+    showToast("登録の取り消しを元に戻しました。");
+  } else {
+    setVehicleCancellation(currentVehicleId, { ...entry, reason }, { ...entry, note: `登録を取り消し（理由：${reason}）` });
+    deleteDraft(`edit:${currentVehicleId}`);
+    showToast("登録を取り消しました。車両一覧の稼働状態で「登録取消」を選ぶと確認できます。");
+  }
+  document.getElementById("cancel-dialog").close();
+  renderVehicleDetail();
 });
 
 // 動作確認用：サンプルデータの追加（sample-data.js を外したときはボタンごと無効）
