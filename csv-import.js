@@ -1,8 +1,9 @@
 // 車両カルテ CSVでの一括取込（ひな形の作成・CSVの読み込み・行ごとのチェック）
 
 // ひな形の列。required の列は必須（車検満了日は売却済・廃車なら不要、保険の終了日は保険ありのとき必須）
+// 社内車両IDは取り込むときに自動で採番する。今までの番号は「これまでの管理番号」に残す
 const IMPORT_COLUMNS = [
-  { key: "id", label: "社内車両ID", example: "", note: "空欄なら自動で採番" },
+  { key: "legacyNumber", label: "これまでの管理番号", example: "号車 12" },
   { key: "model", label: "車種", example: "【記入例】トヨタ ハイエース", required: true },
   { key: "plate", label: "ナンバー", example: "札幌400 さ 12-34", required: true },
   { key: "dept", label: "使用部署", example: "工事第一課", required: true },
@@ -114,8 +115,8 @@ function checkImportRows(text, options) {
   }
 
   const existing = getVehicles();
-  const usedIds = new Set();
   const seenPlates = new Map();
+  const seenLegacy = new Map();
   const vehicles = [];
   const errors = [];
   const warnings = [];
@@ -148,7 +149,8 @@ function checkImportRows(text, options) {
     const hasInsurance = insuranceText === "あり";
     const isLease = ownership === "リース";
     const vehicle = {
-      id: get("id") ? normalizeVehicleId(get("id")) : "",
+      id: "",
+      legacyNumber: get("legacyNumber"),
       model: get("model"),
       plate: formatPlate(get("plate")),
       dept: get("dept"),
@@ -187,16 +189,11 @@ function checkImportRows(text, options) {
     [[vehicle.lease, "リース終了日がリース開始日より前です"], [vehicle.insurance.period, "保険の契約終了日が契約開始日より前です"]].forEach(([period, message]) => {
       if (period.start && period.end && period.end < period.start) problems.push(message);
     });
-    if (vehicle.id) {
-      if (!parseVehicleId(vehicle.id)) problems.push(`社内車両ID「${vehicle.id}」の形が正しくありません（例：V-001）。空欄にすると自動で採番します`);
-      else if (isVehicleIdTaken(vehicle.id) || usedIds.has(vehicle.id)) problems.push(`社内車両ID「${vehicle.id}」はすでに使われています`);
-    }
 
     if (problems.length) {
       errors.push({ line, label: vehicle.model || vehicle.plate || "（車種・ナンバーなし）", problems });
       return;
     }
-    if (vehicle.id) usedIds.add(vehicle.id);
 
     // 同じナンバー：取り込みは止めず、取り込み後に「要確認」として表示される
     const plateKey = normalizePlate(vehicle.plate);
@@ -205,22 +202,27 @@ function checkImportRows(text, options) {
     else if (seenPlates.has(plateKey) && !isRetired(vehicle)) warnings.push({ line, text: `ナンバー「${vehicle.plate}」が${seenPlates.get(plateKey)}行目と同じです（取り込み後、要確認になります）` });
     if (!isRetired(vehicle)) seenPlates.set(plateKey, line);
 
+    // これまでの管理番号が同じ：別の車両に同じ番号が付いていないか確認してもらう
+    const legacyKey = normalizeForSearch(vehicle.legacyNumber);
+    if (legacyKey) {
+      const sameLegacy = existing.find((v) => !isCancelled(v) && normalizeForSearch(v.legacyNumber) === legacyKey);
+      if (sameLegacy) warnings.push({ line, text: `これまでの管理番号「${vehicle.legacyNumber}」が「${sameLegacy.id}」と同じです` });
+      else if (seenLegacy.has(legacyKey)) warnings.push({ line, text: `これまでの管理番号「${vehicle.legacyNumber}」が${seenLegacy.get(legacyKey)}行目と同じです` });
+      seenLegacy.set(legacyKey, line);
+    }
+
     vehicles.push({ line, vehicle });
   });
 
   return { vehicles, errors, warnings };
 }
 
-// チェック済みの車両を登録する。IDが空欄の車両には、ここで順に番号を振る。登録したIDの配列を返す
+// チェック済みの車両を登録し、順に社内車両IDを振る。登録したIDの配列を返す
 function importVehicles(items, historyEntry) {
   const ids = [];
-  // CSVに書かれたIDを先に発行済みにして、自動採番の番号とぶつからないようにする
-  items.forEach(({ vehicle }) => {
-    if (vehicle.id) recordIssuedVehicleId(vehicle.id);
-  });
   items.forEach(({ vehicle }) => {
     const v = { ...vehicle, history: [{ ...historyEntry }] };
-    if (!v.id) v.id = getNextVehicleId();
+    v.id = getNextVehicleId();
     saveVehicle(v);
     recordIssuedVehicleId(v.id);
     ids.push(v.id);

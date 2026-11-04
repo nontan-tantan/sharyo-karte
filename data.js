@@ -100,11 +100,6 @@ function normalizeText(value) {
   return (value || "").normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 
-// 車両ID：半角大文字にそろえ、スペースは取り除く（例：「ｖ－００１」→「V-001」）
-function normalizeVehicleId(id) {
-  return normalizeText(id).replace(/\s/g, "").replace(DASH_PATTERN, "-").toUpperCase();
-}
-
 // ナンバー：ハイフンの種類もそろえる（例：「札幌４００　さ　２１－８７」→「札幌400 さ 21-87」）
 function formatPlate(plate) {
   return normalizeText(plate).replace(DASH_PATTERN, "-");

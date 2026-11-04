@@ -129,7 +129,7 @@
           <option>所有</option>
           <option>リース</option>
         </select>
-        <input type="text" id="filter-keyword" placeholder="フリーワード検索（車両ID・車種・ナンバーなど）">
+        <input type="text" id="filter-keyword" placeholder="フリーワード検索（車両ID・これまでの管理番号・車種・ナンバーなど）">
       </div>
 
       <p class="result-count" id="list-result-count"></p>
@@ -226,10 +226,17 @@
         <fieldset>
           <legend><svg class="legend-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>基本情報</legend>
           <div class="field-row">
-            <label for="field-id">社内車両ID<span class="req">必須</span></label>
+            <label for="field-id">社内車両ID</label>
             <div>
-              <input type="text" id="field-id" name="id">
-              <p class="field-hint">全社通しの連番（例：V-001）で自動採番します。登録したあとは、部署異動があってもIDは変わりません。</p>
+              <input type="text" id="field-id" name="id" readonly>
+              <p class="field-hint">保存すると自動で採番します（全社通しの連番。例：V-001）。登録したあとは、部署異動があっても変わりません。</p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="field-legacy-number">これまでの管理番号</label>
+            <div>
+              <input type="text" id="field-legacy-number" name="legacyNumber" placeholder="例：号車 12、旧台帳 No.0345">
+              <p class="field-hint">今までの台帳や号車番号など、社内で使ってきた番号があれば入力してください（任意）。車両一覧の検索でも見つかります。</p>
             </div>
           </div>
           <div class="field-row">

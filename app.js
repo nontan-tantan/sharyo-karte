@@ -39,6 +39,7 @@ function vehicleFieldDefinitions(after) {
   const ins = (v) => v.insurance || {};
   const dis = (v) => v.disposal || {};
   return [
+    ["これまでの管理番号", (v) => v.legacyNumber],
     ["車種", (v) => v.model],
     ["ナンバー", (v) => v.plate],
     ["使用部署", (v) => v.dept],
@@ -158,7 +159,7 @@ function collectFieldNotices() {
     });
   }
 
-  const isEditing = document.getElementById("field-id").readOnly;
+  const isEditing = isEditingForm();
   const duplicates = findDuplicateVehicles(
     { plate: value("field-plate"), status },
     getVehicles(),
@@ -219,6 +220,7 @@ function showFormError(message) {
 }
 
 function fillForm(vehicle) {
+  document.getElementById("field-legacy-number").value = vehicle.legacyNumber || "";
   document.getElementById("field-model").value = vehicle.model || "";
   document.getElementById("field-plate").value = vehicle.plate || "";
   document.getElementById("field-dept").value = vehicle.dept || "総務部";
@@ -287,6 +289,11 @@ function fillLastEditor(deptId, nameId) {
   document.getElementById(nameId).value = last.name;
 }
 
+// 登録フォームが編集中か（新規登録か）を返す
+function isEditingForm() {
+  return document.getElementById("field-id").dataset.mode === "edit";
+}
+
 function enterFormMode(mode) {
   document.getElementById("vehicle-form").reset();
   clearFormError();
@@ -300,12 +307,12 @@ function enterFormMode(mode) {
     const vehicle = getVehicles().find((v) => v.id === currentVehicleId);
     if (vehicle) fillForm(vehicle);
     idField.value = currentVehicleId;
-    idField.readOnly = true;
+    idField.dataset.mode = "edit";
   } else {
+    // 新規登録：採番される予定の番号を表示する（実際の番号は保存したときに決まる）
     idField.value = getNextVehicleId();
-    idField.readOnly = false;
+    idField.dataset.mode = "new";
   }
-  idField.dataset.autoId = idField.value;
 
   updateOwnershipFields();
   updateInsuranceFields();
@@ -350,10 +357,9 @@ function autosaveDraft() {
   }
   const idField = document.getElementById("field-id");
   saveDraft(formDraftKey, {
-    mode: idField.readOnly ? "edit" : "new",
-    vehicleId: idField.readOnly ? idField.value : "",
+    mode: isEditingForm() ? "edit" : "new",
+    vehicleId: isEditingForm() ? idField.value : "",
     model: document.getElementById("field-model").value.trim(),
-    autoId: idField.dataset.autoId,
     savedAt: `${todayString()} ${nowTimeString()}`,
     state: readFormState(),
   });
@@ -362,17 +368,9 @@ function autosaveDraft() {
 function restoreDraft(draft) {
   writeFormState(draft.state);
   const idField = document.getElementById("field-id");
-  if (idField.readOnly) {
-    // 編集：下書きのあとに統合でIDが変わっていても、今のIDで編集する
-    idField.value = currentVehicleId;
-  } else {
-    idField.dataset.autoId = draft.autoId;
-    // 下書きのあとに同じIDが使われていたら、空いている番号に振り直す
-    if (isVehicleIdTaken(idField.value)) {
-      idField.value = getNextVehicleId();
-      idField.dataset.autoId = idField.value;
-    }
-  }
+  // 下書きに残っている番号ではなく、今の番号を表示する
+  // （編集：下書きのあとに統合でIDが変わっていることがある／新規：下書きのあとに別の車両が登録されていることがある）
+  idField.value = isEditingForm() ? currentVehicleId : getNextVehicleId();
   updateOwnershipFields();
   updateInsuranceFields();
   updateDisposalFields();
@@ -421,7 +419,7 @@ async function confirmLeaveForm() {
 
 // フォームを閉じて元の画面（編集なら車両詳細、新規なら車両一覧）に戻る
 function closeForm() {
-  const isEditing = document.getElementById("field-id").readOnly;
+  const isEditing = isEditingForm();
   if (isEditing) {
     openVehicleDetail(currentVehicleId);
   } else {
@@ -473,16 +471,12 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
   clearFormError();
 
   const idField = document.getElementById("field-id");
-  const id = idField.readOnly ? idField.value : normalizeVehicleId(idField.value);
+  const isEditing = isEditingForm();
+  const id = isEditing ? idField.value : getNextVehicleId();
   const editorName = normalizeText(document.getElementById("field-editor-name").value);
   const editorDept = document.getElementById("field-editor-dept").value;
   const editor = editorName ? `${editorName}（${editorDept}）` : "";
 
-  if (!id) {
-    showFormError("社内車両IDを入力してください。");
-    markInvalidFields(["field-id"]);
-    return;
-  }
   if (!editorName) {
     showFormError("操作者名を入力してください。");
     markInvalidFields(["field-editor-name"]);
@@ -493,19 +487,13 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
     return;
   }
 
-  const isEditing = idField.readOnly;
-
-  if (!isEditing && isVehicleIdTaken(id)) {
-    showFormError(`車両ID「${id}」はすでに使われています。別のIDを入力してください。`);
-    markInvalidFields(["field-id"]);
-    return;
-  }
 
   const isLease = document.getElementById("ownership-lease").checked;
   const hasInsurance = document.getElementById("field-has-insurance").checked;
 
   const vehicle = {
     id,
+    legacyNumber: normalizeText(document.getElementById("field-legacy-number").value),
     model: normalizeText(document.getElementById("field-model").value),
     plate: formatPlate(document.getElementById("field-plate").value),
     dept: document.getElementById("field-dept").value,
@@ -743,6 +731,7 @@ function renderVehicleDetail() {
   const formerIds = vehicle.formerIds || [];
   fillFieldGrid(document.getElementById("detail-basic"), [
     ...(formerIds.length ? [["旧車両ID", `${formerIds.join("、")}（欠番）`]] : []),
+    ...(vehicle.legacyNumber ? [["これまでの管理番号", vehicle.legacyNumber]] : []),
     ["車種", vehicle.model],
     ["ナンバー", vehicle.plate],
     ["使用部署", vehicle.dept],
@@ -869,7 +858,7 @@ function renderVehicleList() {
     if (status && !showCancelled && v.status !== status) return false;
     if (ownership && v.ownership !== ownership) return false;
     if (keyword) {
-      const haystack = normalizeForSearch(`${v.id} ${(v.formerIds || []).join(" ")} ${v.model} ${v.plate}`);
+      const haystack = normalizeForSearch(`${v.id} ${(v.formerIds || []).join(" ")} ${v.legacyNumber || ""} ${v.model} ${v.plate}`);
       if (!haystack.includes(keyword)) return false;
     }
     return true;
@@ -1501,7 +1490,7 @@ document.getElementById("import-file").addEventListener("change", async (event) 
   renderImportList("import-warnings", "確認してほしい行（取り込みはされます）", "caution",
     warnings.map(({ line, text }) => `${line}行目：${text}`));
   renderImportList("import-preview", "取り込まれる車両", "ok",
-    vehicles.map(({ line, vehicle }) => `${line}行目：${vehicle.id || "（自動で採番）"}　${vehicle.model}　${vehicle.plate}　${vehicle.dept}`));
+    vehicles.map(({ line, vehicle }) => `${line}行目：${vehicle.model}　${vehicle.plate}　${vehicle.dept}` + (vehicle.legacyNumber ? `　（これまでの管理番号：${vehicle.legacyNumber}）` : "")));
   document.getElementById("import-result").hidden = false;
   document.getElementById("import-submit").disabled = vehicles.length === 0;
 });
