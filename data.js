@@ -17,10 +17,9 @@ function saveVehicle(vehicle) {
   saveVehicles(vehicles);
 }
 
-// oldId を渡すと、車両IDが変わった場合（部署異動）も元のデータを置き換える
-function updateVehicle(vehicle, oldId = vehicle.id) {
+function updateVehicle(vehicle) {
   const vehicles = getVehicles();
-  const index = vehicles.findIndex((v) => v.id === oldId);
+  const index = vehicles.findIndex((v) => v.id === vehicle.id);
   if (index === -1) return;
   vehicles[index] = vehicle;
   saveVehicles(vehicles);
@@ -30,15 +29,10 @@ function deleteVehicle(id) {
   saveVehicles(getVehicles().filter((v) => v.id !== id));
 }
 
-// 車両ID：部署コード＋連番（例：GA-001）
-// 一度発行した番号は、部署異動・売却・廃車・削除のあとも再利用しない（欠番にする）
-const DEPT_CODES = {
-  "総務部": "GA",
-  "営業部": "SL",
-  "工事第一課": "C1",
-  "工事第二課": "C2",
-  "運行管理部": "OP",
-};
+// 車両ID：全社通しの連番（例：V-001）。登録したあとは、部署異動があっても変えない
+// 一度発行した番号は、売却・廃車・削除・統合のあとも再利用しない（欠番にする）
+// 以前の採番ルールで登録した「GA-001」などのIDは、そのまま使い続ける
+const VEHICLE_ID_PREFIX = "V";
 const ID_COUNTER_KEY = "vehicleIdCounters";
 
 function getIdCounters() {
@@ -46,7 +40,7 @@ function getIdCounters() {
   return raw ? JSON.parse(raw) : {};
 }
 
-// 現在のIDと旧IDをすべて含めて、使われたことのあるIDか調べる
+// 現在のIDと旧ID（統合で欠番になったIDなど）をすべて含めて、使われたことのあるIDか調べる
 function isVehicleIdTaken(id) {
   return getVehicles().some((v) => v.id === id || (v.formerIds || []).includes(id));
 }
@@ -56,9 +50,9 @@ function parseVehicleId(id) {
   return match ? { prefix: match[1], number: parseInt(match[2], 10) } : null;
 }
 
-// 部署の次の番号を返す（まだ発行済みとして記録はしない）
-function getNextVehicleId(dept) {
-  const prefix = DEPT_CODES[dept] || "V";
+// 次の番号を返す（まだ発行済みとして記録はしない）
+function getNextVehicleId() {
+  const prefix = VEHICLE_ID_PREFIX;
   let max = getIdCounters()[prefix] || 0;
   getVehicles().forEach((v) => {
     [v.id, ...(v.formerIds || [])].forEach((id) => {
@@ -83,12 +77,32 @@ function isRetired(vehicle) {
   return vehicle.status === "売却済" || vehicle.status === "廃車";
 }
 
-// ナンバーの表記ゆれ（空白・全角半角・ハイフンの種類）をそろえて比較用の文字列にする
+// 入力の表記ゆれをそろえる（保存時に使う）
+// 英数字・記号・スペースは半角に、連続するスペースは1つにまとめ、前後のスペースは取る
+const DASH_PATTERN = /[‐‑‒–—―−ー]/g;
+
+function normalizeText(value) {
+  return (value || "").normalize("NFKC").replace(/\s+/g, " ").trim();
+}
+
+// 車両ID：半角大文字にそろえ、スペースは取り除く（例：「ｖ－００１」→「V-001」）
+function normalizeVehicleId(id) {
+  return normalizeText(id).replace(/\s/g, "").replace(DASH_PATTERN, "-").toUpperCase();
+}
+
+// ナンバー：ハイフンの種類もそろえる（例：「札幌４００　さ　２１－８７」→「札幌400 さ 21-87」）
+function formatPlate(plate) {
+  return normalizeText(plate).replace(DASH_PATTERN, "-");
+}
+
+// ナンバーの比較用の文字列（スペースの有無も無視する）
 function normalizePlate(plate) {
-  return (plate || "")
-    .normalize("NFKC")
-    .replace(/\s/g, "")
-    .replace(/[‐‑‒–—―−ー]/g, "-");
+  return formatPlate(plate).replace(/\s/g, "");
+}
+
+// 検索用の文字列：全角半角・大文字小文字・スペースの有無・ハイフンの種類を無視する
+function normalizeForSearch(text) {
+  return normalizeText(text).replace(/\s/g, "").replace(DASH_PATTERN, "-").toLowerCase();
 }
 
 // 同じナンバーで登録されている別の車両を返す（売却済・廃車は対象外）

@@ -152,18 +152,15 @@ function enterFormMode(mode) {
     if (vehicle) fillForm(vehicle);
     idField.value = currentVehicleId;
     idField.readOnly = true;
-    idField.dataset.originalDept = vehicle ? vehicle.dept : "";
   } else {
-    idField.value = getNextVehicleId(document.getElementById("field-dept").value);
+    idField.value = getNextVehicleId();
     idField.readOnly = false;
-    idField.dataset.originalDept = "";
   }
   idField.dataset.autoId = idField.value;
 
   updateOwnershipFields();
   updateInsuranceFields();
   updateDisposalFields();
-  updateIdForDept();
 
   formDraftKey = mode === "edit" && currentVehicleId ? `edit:${currentVehicleId}` : "new";
   formInitialState = readFormState();
@@ -216,20 +213,19 @@ function restoreDraft(draft) {
   writeFormState(draft.state);
   const idField = document.getElementById("field-id");
   if (idField.readOnly) {
-    // 編集：下書きのあとに部署異動や統合でIDが変わっていても、今のIDで編集する
+    // 編集：下書きのあとに統合でIDが変わっていても、今のIDで編集する
     idField.value = currentVehicleId;
   } else {
     idField.dataset.autoId = draft.autoId;
     // 下書きのあとに同じIDが使われていたら、空いている番号に振り直す
     if (isVehicleIdTaken(idField.value)) {
-      idField.value = getNextVehicleId(document.getElementById("field-dept").value);
+      idField.value = getNextVehicleId();
       idField.dataset.autoId = idField.value;
     }
   }
   updateOwnershipFields();
   updateInsuranceFields();
   updateDisposalFields();
-  updateIdForDept();
 }
 
 // フォームを開いたとき、下書きがあれば続きから入力するか確認する
@@ -306,31 +302,6 @@ document.getElementById("form-save-draft").addEventListener("click", () => {
   showToast(dirty ? "下書きを保存しました。ダッシュボードから続きを入力できます。" : "変更がないため、下書きは保存しませんでした。");
 });
 
-// 使用部署に合わせて車両IDを案内する
-// 新規：自動採番のままなら部署コードの番号に振り直す／編集：部署を変えると保存時にIDが変わることを表示
-function updateIdForDept() {
-  const idField = document.getElementById("field-id");
-  const dept = document.getElementById("field-dept").value;
-  const note = document.getElementById("id-change-note");
-
-  if (!idField.readOnly) {
-    if (idField.value === idField.dataset.autoId) {
-      idField.value = getNextVehicleId(dept);
-      idField.dataset.autoId = idField.value;
-    }
-    note.hidden = true;
-    return;
-  }
-
-  const deptChanged = idField.dataset.originalDept && dept !== idField.dataset.originalDept;
-  note.hidden = !deptChanged;
-  if (deptChanged) {
-    note.textContent = `使用部署を変更すると、保存時に車両IDが「${getNextVehicleId(dept)}」に変わります（「${idField.value}」は欠番になります）。`;
-  }
-}
-
-document.getElementById("field-dept").addEventListener("change", updateIdForDept);
-
 document.querySelectorAll('input[name="ownership"]').forEach((radio) => {
   radio.addEventListener("change", updateOwnershipFields);
 });
@@ -347,8 +318,8 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
   clearFormError();
 
   const idField = document.getElementById("field-id");
-  const id = idField.value.trim();
-  const editorName = document.getElementById("field-editor-name").value.trim();
+  const id = idField.readOnly ? idField.value : normalizeVehicleId(idField.value);
+  const editorName = normalizeText(document.getElementById("field-editor-name").value);
   const editorDept = document.getElementById("field-editor-dept").value;
   const editor = editorName ? `${editorName}（${editorDept}）` : "";
 
@@ -373,10 +344,10 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
 
   const vehicle = {
     id,
-    model: document.getElementById("field-model").value.trim(),
-    plate: document.getElementById("field-plate").value.trim(),
+    model: normalizeText(document.getElementById("field-model").value),
+    plate: formatPlate(document.getElementById("field-plate").value),
     dept: document.getElementById("field-dept").value,
-    usage: document.getElementById("field-usage").value.trim(),
+    usage: normalizeText(document.getElementById("field-usage").value),
     status: document.getElementById("field-status").value,
     shakenExpiresAt: document.getElementById("field-shaken").value,
     ownership: isLease ? "リース" : "所有",
@@ -402,9 +373,9 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
   vehicle.disposal = isRetired(vehicle)
     ? {
         date: document.getElementById("field-disposal-date").value,
-        partner: document.getElementById("field-disposal-partner").value.trim(),
+        partner: normalizeText(document.getElementById("field-disposal-partner").value),
         amount: isSold ? document.getElementById("field-disposal-amount").value : "",
-        note: document.getElementById("field-disposal-note").value.trim(),
+        note: normalizeText(document.getElementById("field-disposal-note").value),
       }
     : { date: "", partner: "", amount: "", note: "" };
 
@@ -440,20 +411,13 @@ document.getElementById("vehicle-form").addEventListener("submit", async (event)
     vehicle.formerIds = existing ? existing.formerIds || [] : [];
     const changes = existing ? describeChanges(existing, vehicle) : [];
 
-    // 部署異動：異動先の部署コードで新しい番号を振り、元のIDは欠番として旧IDに残す
-    if (existing && existing.dept !== vehicle.dept) {
-      vehicle.id = getNextVehicleId(vehicle.dept);
-      vehicle.formerIds = [...vehicle.formerIds, id];
-      changes.unshift(`車両IDを「${id}」から「${vehicle.id}」に変更（部署異動のため。「${id}」は欠番）`);
-    }
-
     vehicle.history.unshift({
       date: todayString(),
       time: nowTimeString(),
       note: changes.length ? changes.join("\n") : "内容の変更なしで保存",
       editor,
     });
-    updateVehicle(vehicle, id);
+    updateVehicle(vehicle);
   } else {
     vehicle.formerIds = [];
     vehicle.history = [{ date: todayString(), time: nowTimeString(), note: "新規登録", editor }];
@@ -695,7 +659,7 @@ function renderVehicleList() {
   const usage = document.getElementById("filter-usage").value;
   const status = document.getElementById("filter-status").value;
   const ownership = document.getElementById("filter-ownership").value;
-  const keyword = document.getElementById("filter-keyword").value.trim().toLowerCase();
+  const keyword = normalizeForSearch(document.getElementById("filter-keyword").value);
 
   const allVehicles = getVehicles();
   const vehicles = allVehicles.filter((v) => {
@@ -704,7 +668,7 @@ function renderVehicleList() {
     if (status && v.status !== status) return false;
     if (ownership && v.ownership !== ownership) return false;
     if (keyword) {
-      const haystack = `${v.id} ${(v.formerIds || []).join(" ")} ${v.model} ${v.plate}`.toLowerCase();
+      const haystack = normalizeForSearch(`${v.id} ${(v.formerIds || []).join(" ")} ${v.model} ${v.plate}`);
       if (!haystack.includes(keyword)) return false;
     }
     return true;
@@ -896,7 +860,7 @@ function renderIssueList(flagged) {
   });
 }
 
-// 編集の下書きの車両が、部署異動や統合でIDが変わっていても見つけられるようにする
+// 編集の下書きの車両が、統合でIDが変わっていても見つけられるようにする
 function findVehicleForDraft(vehicleId, vehicles) {
   return vehicles.find((v) => v.id === vehicleId || (v.formerIds || []).includes(vehicleId));
 }
@@ -1151,7 +1115,7 @@ document.getElementById("merge-cancel").addEventListener("click", () => {
 
 document.getElementById("merge-submit").addEventListener("click", () => {
   const errorEl = document.getElementById("merge-error");
-  const editorName = document.getElementById("merge-editor-name").value.trim();
+  const editorName = normalizeText(document.getElementById("merge-editor-name").value);
   if (!editorName) {
     errorEl.textContent = "操作者名を入力してください。";
     errorEl.hidden = false;

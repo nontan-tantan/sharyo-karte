@@ -37,14 +37,14 @@ function buildSampleVehicles() {
         { date: "2021-05-18", note: "新規登録", editor: "鈴木（総務部）" },
       ],
     },
-    // 保険期限が近い（あと12日）・リース・月払い・営業部から部署異動（旧IDは欠番）
+    // 保険期限が近い（あと12日）・リース・月払い・営業部から部署異動（車両IDは変わらない）
     {
-      model: "日産 NV350キャラバン", plate: "函館300 ち 4-15", dept: "工事第二課", formerDept: "営業部", usage: "現場移動",
+      model: "日産 NV350キャラバン", plate: "函館300 ち 4-15", dept: "工事第二課", usage: "現場移動",
       status: "稼働中", shakenExpiresAt: dateFromToday(300),
       ownership: "リース", purchaseDate: "", lease: { start: dateFromToday(-900), end: dateFromToday(195) },
       insurance: sampleInsurance("丹頂総合保険株式会社", -353, 12, "月払い", 8200),
       history: [
-        { date: "2025-07-14", time: "16:40", idChange: true, note: "使用部署を「営業部」から「工事第二課」に変更\n用途を「営業回り」から「現場移動」に変更", editor: "中村（工事第二課）" },
+        { date: "2025-07-14", time: "16:40", note: "使用部署を「営業部」から「工事第二課」に変更\n用途を「営業回り」から「現場移動」に変更", editor: "中村（工事第二課）" },
         { date: "2024-04-22", note: "新規登録", editor: "伊藤（営業部）" },
       ],
     },
@@ -216,27 +216,12 @@ function buildSampleVehicles() {
 }
 
 // 既存データは残し、空いている車両IDを順に割り当てて追加する。追加したIDの配列を返す
-// formerDept がある車両は、異動元の部署で番号を発行してから異動先の番号に振り直す（異動元の番号は欠番になる）
 function addSampleVehicles() {
   const addedIds = [];
   buildSampleVehicles().forEach((vehicle) => {
     vehicle.formerIds = [];
-    if (vehicle.formerDept) {
-      const oldId = getNextVehicleId(vehicle.formerDept);
-      recordIssuedVehicleId(oldId);
-      vehicle.formerIds.push(oldId);
-    }
-    vehicle.id = getNextVehicleId(vehicle.dept);
+    vehicle.id = getNextVehicleId();
     recordIssuedVehicleId(vehicle.id);
-
-    vehicle.history.forEach((entry) => {
-      if (!entry.idChange) return;
-      const oldId = vehicle.formerIds[0];
-      entry.note = `車両IDを「${oldId}」から「${vehicle.id}」に変更（部署異動のため。「${oldId}」は欠番）\n${entry.note}`;
-      delete entry.idChange;
-    });
-    delete vehicle.formerDept;
-
     saveVehicle(vehicle);
     addedIds.push(vehicle.id);
   });

@@ -297,7 +297,6 @@ tbody tr:hover td{ background:var(--surface-2); }
 
 /* 登録フォーム：車両IDの案内 */
 .field-hint{ margin:6px 0 0; font-size:11px; line-height:1.6; color:var(--ink-faint); }
-.field-hint-warn{ color:var(--warning); font-weight:600; }
 .field-hint[hidden]{ display:none; }
 
 /* 登録フォーム：売却・廃車の情報 */
